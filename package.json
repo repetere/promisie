@@ -4,16 +4,24 @@
   "description": "promisify using es6 promises",
   "main": "index.js",
   "scripts": {
-    "test": "mocha test ./test/test.js"
+    "test": "mocha test ./test/test.js",
+    "start": "node ./index.js"
   },
   "keywords": [
     "promise",
     "promisify",
     "promisifyall",
-    "es6"
+    "es6",
+    "es6 promise",
+    "es6 class"
   ],
-  "author": "Jan Bialostok",
+  "author": "Jan Bialostok <janbialostok@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/janbialostok/promisie"
+  },
   "license": "ISC",
+  "analyze": true,
   "dependencies": {},
   "devDependencies": {
     "chai": "^3.4.1",
