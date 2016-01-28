@@ -1,6 +1,6 @@
 {
   "name": "promisie",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "promisify using es6 promises",
   "main": "index.js",
   "scripts": {

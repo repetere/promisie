@@ -13,12 +13,12 @@ class Promisie extends Promise {
                 args.push(arguments[key]);
             }
         }
-        return new Promise(function(resolve, reject) {
+        return new Promise((resolve, reject) => {
           args.push(function(err, data) {
             if (err) reject(err);
             else resolve(data);
           });
-          fn.apply(null, args);
+          fn.apply(this, args);
         });
       };
 	  }
