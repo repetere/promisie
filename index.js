@@ -1,10 +1,10 @@
 'use strict';
 
 class Promisie extends Promise {
-	static promisify(fn) {
+	static promisify(fn, _this) {
 	  if (typeof fn !== 'function') throw new TypeError('ERROR: promisify must be called with a function');
 	  else {
-      return function() {
+	  	let promisified = function () {
         let args = [];
         for (var key in arguments) {
         	if (arguments.hasOwnProperty(key)) args.push(arguments[key]);
@@ -17,13 +17,17 @@ class Promisie extends Promise {
           fn.apply(this, args);
         });
       };
+	  	if (_this) {
+	  		return promisified.bind(_this);
+	  	}
+      return promisified;
 	  }
   }
-  static promisifyAll(mod) {
+  static promisifyAll(mod, _this) {
   	if (mod && typeof mod === 'object') {
   		let promisified = mod;
 	  	Object.keys(mod).forEach(key => {
-	  		if (typeof mod[key] === 'function') promisified[key + 'Async'] = this.promisify(mod[key]);
+	  		if (typeof mod[key] === 'function') promisified[key + 'Async'] = (_this) ? this.promisify(mod[key]).bind(_this) : this.promisify(mod[key]);
 	  	});
   		return promisified;
   	}

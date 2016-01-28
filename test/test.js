@@ -102,7 +102,16 @@ describe('Promisie test', function () {
 					}, 4000);
 				},
 				e: 'e'
-			};
+			},
+			testConstructor = function (str) {
+				this.msg = str;
+				this.log = function (cb) {
+					setTimeout(() => {
+						cb(null, this.msg);
+					}, 2000);
+				};
+			},
+			f = new testConstructor('hello');
 		describe('promisify functionality', function () {
 			this.timeout(7000);
 			let test = Promisie.promisify(a);
@@ -123,6 +132,14 @@ describe('Promisie test', function () {
 						expect(e instanceof Error).to.be.true;
 						done();
 					});
+			});
+			it('Should be able to promisify prototype metods if "this" is passed as second argument', function (done) {
+				this.timeout(3000);
+				let test = Promisie.promisify(f.log, f);
+				test().then(msg => { 
+					expect(msg).to.equal('hello');
+					done();
+				});
 			});
 		});
 		describe('promisifyAll functionality', function () {
