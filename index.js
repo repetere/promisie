@@ -17,10 +17,8 @@ class Promisie extends Promise {
           fn.apply(this, args);
         });
       };
-	  	if (_this) {
-	  		return promisified.bind(_this);
-	  	}
-      return promisified;
+	  	if (_this) return promisified.bind(_this);
+      else return promisified;
 	  }
   }
   static promisifyAll(mod, _this) {
