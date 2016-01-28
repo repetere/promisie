@@ -78,7 +78,7 @@ describe('Promisie test', function () {
 				else {
 					cb(null, str);
 				}
-			}, 5000);
+			}, 2000);
 		},
 			b = {
 				c: function (str, cb) {
@@ -89,7 +89,7 @@ describe('Promisie test', function () {
 						else {
 							cb(null, str);
 						}
-					}, 7500);
+					}, 2000);
 				},
 				d: function (str, cb) {
 					setTimeout(function () {
@@ -99,7 +99,7 @@ describe('Promisie test', function () {
 						else {
 							cb(null, str);
 						}
-					}, 10000);
+					}, 4000);
 				},
 				e: 'e'
 			};
