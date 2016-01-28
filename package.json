@@ -1,0 +1,22 @@
+{
+  "name": "promisie",
+  "version": "1.0.0",
+  "description": "promisify using es6 promises",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test ./test/test.js"
+  },
+  "keywords": [
+    "promise",
+    "promisify",
+    "promisifyall",
+    "es6"
+  ],
+  "author": "Jan Bialostok",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "chai": "^3.4.1",
+    "mocha": "^2.4.4"
+  }
+}
