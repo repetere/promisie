@@ -23,9 +23,10 @@ class Promisie extends Promise {
   }
   static promisifyAll(mod, _this) {
   	if (mod && typeof mod === 'object') {
-  		let promisified = mod;
-	  	Object.keys(mod).forEach(key => {
-	  		if (typeof mod[key] === 'function') promisified[key + 'Async'] = (_this) ? this.promisify(mod[key]).bind(_this) : this.promisify(mod[key]);
+  		let promisified = Object.create(mod);
+      promisified = Object.assign((promisified && typeof promisified === 'object') ? promisified : {}, mod);
+	  	Object.keys(promisified).forEach(key => {
+	  		if (typeof promisified[key] === 'function') promisified[key + 'Async'] = (_this) ? this.promisify(promisified[key]).bind(_this) : this.promisify(promisified[key]);
 	  	});
   		return promisified;
   	}
