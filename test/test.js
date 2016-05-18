@@ -101,7 +101,19 @@ describe('Promisie test', function () {
 						}
 					}, 4000);
 				},
-				e: 'e'
+				e: 'e',
+				f: {
+					g: function (str, cb) {
+						setTimeout(function () {
+							if (str instanceof Error) {
+								cb(str);
+							}
+							else {
+								cb(null, str);
+							}
+						}, 4000);
+					}
+				}
 			},
 			testConstructor = function (str) {
 				this.msg = str;
@@ -149,6 +161,8 @@ describe('Promisie test', function () {
 				expect(test.cAsync('') instanceof Promise).to.be.true;
 				expect(test.dAsync('') instanceof Promise).to.be.true;
 				expect(test.eAsnyc).to.equal(undefined);
+				expect(test.f).to.be.an('object');
+				expect(test.f.gAsync('') instanceof Promise).to.be.true;
 			});
 			it('Async methods should be chainable', function (done) {
 				test.cAsync('hello')
