@@ -1,7 +1,7 @@
 'use strict';
 
 class Promisie extends Promise {
-	static promisify(fn, _this) {
+	static promisify (fn, _this) {
 	  if (typeof fn !== 'function') throw new TypeError('ERROR: promisify must be called with a function');
 	  else {
 	  	let promisified = function () {
@@ -21,7 +21,7 @@ class Promisie extends Promise {
       else return promisified;
 	  }
   }
-  static promisifyAll(mod, _this) {
+  static promisifyAll (mod, _this) {
   	if (mod && typeof mod === 'object') {
   		let promisified = Object.create(mod);
       promisified = Object.assign((promisified && typeof promisified === 'object') ? promisified : {}, mod);
@@ -36,12 +36,12 @@ class Promisie extends Promise {
   try (onSuccess, onFailure) {
     return this.then(data => {
       try {
-        return onSuccess(data);
+        return (typeof onSuccess === 'function') ? onSuccess(data) : null;
       }
       catch (e) {
         return Promisie.reject(e);
       }
-    }, e => onFailure(e));
+    }, e => (typeof onFailure === 'function') ? onFailure(e) : null);
   }
 }
 
