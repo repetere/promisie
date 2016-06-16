@@ -9,7 +9,7 @@ class Promisie extends Promise {
         for (var key in arguments) {
         	if (arguments.hasOwnProperty(key)) args.push(arguments[key]);
         }
-        return new Promise((resolve, reject) => {
+        return new Promisie((resolve, reject) => {
           args.push(function(err, data) {
             if (err) reject(err);
             else resolve(data);
@@ -32,6 +32,16 @@ class Promisie extends Promise {
   		return promisified;
   	}
   	else throw new TypeError('ERROR: promisifyAll must be called with an object or array');
+  }
+  try (onSuccess, onFailure) {
+    return this.then(data => {
+      try {
+        return onSuccess(data);
+      }
+      catch (e) {
+        return Promisie.reject(e);
+      }
+    }, e => onFailure(e));
   }
 }
 
