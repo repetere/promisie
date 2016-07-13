@@ -1,28 +1,33 @@
 'use strict';
 
 class Promisie extends Promise {
-  static promisify (fn, receiver){
-    if (!fn || typeof fn !== 'function') throw new TypeError('ERROR: promisify must be called with a function');
-    return (...args) => new Promise((resolve, reject) =>{
-      args.push(function (err, data){
-        if (err) reject(err);
+  static promisify(fn,receiver){
+    if(!fn || typeof fn !== 'function') throw new TypeError('ERROR: promisify must be called with a function');
+    return (...args) => new Promise((resolve,reject) =>{
+      args.push(function(err,data){
+        if(err) reject(err);
         else resolve(data);
       });
-      Reflect.apply(fn, receiver, args);
+      Reflect.apply(fn,receiver,args);
     });
   }
 
-  static dePromisify (fn){
-    if (!fn || typeof fn !== 'function') throw new TypeError('ERROR: dePromisify must be called with a function');
-    return function (...args){
+  static dePromisify(fn){
+    if(!fn || typeof fn !== 'function') throw new TypeError('ERROR: dePromisify must be called with a function');
+    return function(...args){
       const cb = args.pop();
       Promise
       .resolve(fn)
       .then(trustedFn=>{
-        return trustedFn(...args)
+        try {
+          return trustedFn(...args)
+        }
+        catch(e) {
+          Promise.reject(new TypeError(`${fn.name} is not a promisified function`, e.stack));
+        }
       })
       .then(data=>{
-        cb(null, data);
+        cb(null,data);
       })
       .catch(err=>{
         cb(err)
@@ -30,13 +35,13 @@ class Promisie extends Promise {
     }
   }
 
-  static promisifyAll (mod, _this){
-    if (mod && typeof mod === 'object'){
+  static promisifyAll(mod,_this){
+    if(mod && typeof mod === 'object'){
       let promisified = Object.create(mod);
-      promisified = Object.assign((promisified && typeof promisified === 'object') ? promisified : {}, mod);
+      promisified = Object.assign((promisified && typeof promisified === 'object') ? promisified : {},mod);
       Object.keys(promisified).forEach(key =>{
-        if (typeof promisified[key] === 'function') promisified[key + 'Async'] = (_this) ? this.promisify(promisified[key]).bind(_this) : this.promisify(promisified[key]);
-        if (promisified[key] && typeof promisified[key] === 'object') promisified[key] = this.promisifyAll(promisified[key], _this);
+        if(typeof promisified[key] === 'function') promisified[key + 'Async'] = (_this) ? this.promisify(promisified[key]).bind(_this) : this.promisify(promisified[key]);
+        if(promisified[key] && typeof promisified[key] === 'object') promisified[key] = this.promisifyAll(promisified[key],_this);
       });
       return promisified;
     }
@@ -44,15 +49,15 @@ class Promisie extends Promise {
   }
 
   try
-  (onSuccess, onFailure){
+  (onSuccess,onFailure){
     return this.then(data =>{
       try {
         return (typeof onSuccess === 'function') ? onSuccess(data) : null;
       }
-      catch (e) {
+      catch(e) {
         return Promisie.reject(e);
       }
-    }, e => (typeof onFailure === 'function') ? onFailure(e) : null);
+    },e => (typeof onFailure === 'function') ? onFailure(e) : null);
   }
 }
 
