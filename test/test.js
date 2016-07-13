@@ -47,12 +47,6 @@ describe('Promisie test', function (){
       });
     });
     describe('dePromisify functionality', function (){
-      it('Should return a function when called with a function', function (){
-        let a = function (){
-          return;
-        };
-        expect(Promisie.dePromisify(a)).to.be.a('function');
-      });
       it('Should throw an error when called with a non-object', function (){
         try {
           let a = Promisie.dePromisify(function (){});
