@@ -11,11 +11,16 @@ class Promisie extends Promise {
       Reflect.apply(fn, receiver, args);
     });
   }
+
   static dePromisify (fn){
     if (!fn || typeof fn !== 'function') throw new TypeError('ERROR: dePromisify must be called with a function');
-    return function (...args) {
+    return function (...args){
       const cb = args.pop();
-      fn(...args)
+      Promise
+      .resolve(fn)
+      .then(trustedFn=>{
+        return trustedFn(...args)
+      })
       .then(data=>{
         cb(null, data);
       })
@@ -24,6 +29,7 @@ class Promisie extends Promise {
       })
     }
   }
+
   static promisifyAll (mod, _this){
     if (mod && typeof mod === 'object'){
       let promisified = Object.create(mod);
