@@ -165,7 +165,7 @@ describe('Promisie test', function (){
         });
       });
     });
-    describe('dePromisify functionality', function (){
+    describe('depromisify functionality', function (){
 
       this.timeout(7000);
       let successData;
@@ -183,7 +183,7 @@ describe('Promisie test', function (){
       it('Should accept a callback as the last argument', function (done){
         this.timeout(7000);
         fs.readFileAsync = Promisie.promisify(fs.readFile);
-        let test = Promisie.dePromisify(fs.readFileAsync);
+        let test = Promisie.depromisify(fs.readFileAsync);
 
         test(path.resolve(__dirname, './testReadFile.txt'),'utf8', function (err, data){
           if (err){
