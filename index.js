@@ -13,7 +13,7 @@ class Promisie extends Promise {
   }
 
   static dePromisify (fn){
-    if (!fn || typeof fn !== 'object') throw new TypeError('ERROR: dePromisify must be called with a object');
+    if (!fn || typeof fn !== 'function') throw new TypeError('ERROR: dePromisify must be called with a function');
     return function (...args){
       const cb = args.pop();
       Promise
