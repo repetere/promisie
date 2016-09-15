@@ -16,7 +16,7 @@ describe('Promisie test', function () {
 			expect(Promisie.promisifyAll).to.be.a('function');
 		});
 		it('Should return an instance of a promise if called with "new" keyword', function () {
-			let a = new Promisie(function () {});
+			let a = new Promisie(function () { });
 			expect(a instanceof Promise).to.be.true;
 		});
 		it('Should be chainable if a new Promisie is returned', function () {
@@ -139,7 +139,7 @@ describe('Promisie test', function () {
 			});
 			it('Should fall into catch block if promisified function is rejected', function (done) {
 				test(new Error('Test Error'))
-					.then(msg => {})
+					.then(msg => { })
 					.catch(e => {
 						expect(e instanceof Error).to.be.true;
 						done();
@@ -148,7 +148,7 @@ describe('Promisie test', function () {
 			it('Should be able to promisify prototype metods if "this" is passed as second argument', function (done) {
 				this.timeout(3000);
 				let test = Promisie.promisify(f.log, f);
-				test().then(msg => { 
+				test().then(msg => {
 					expect(msg).to.equal('hello');
 					done();
 				});
@@ -177,12 +177,106 @@ describe('Promisie test', function () {
 			});
 			it('Should fall into catch block if promisified function is rejected', function (done) {
 				test.cAsync(new Error('Test Error'))
-					.then(msg => {})
+					.then(msg => { })
 					.catch(e => {
 						expect(e instanceof Error).to.be.true;
 						done();
 					});
 			});
+		});
+	});
+	describe('Static method series testing', function () {
+		this.timeout(15000);
+		it('Should be able to run a series of async functions', done => {
+			let asyncfns = [1, 2, 3, 4, 5].map(i => {
+				return function (val) {
+					return new Promise((resolve, reject) => {
+						setTimeout(function () {
+							resolve(i + (val || 0));
+						}, i * 250);
+					});
+				};
+			});
+			Promisie.series(asyncfns)
+				.then(result => {
+					expect(result).to.equal(15);
+					done();
+				}, done);
+		});
+		it('Should be able to run a series containing sync functions', done => {
+			let asyncfns = [1, 2, 3, 4, 5].map(i => {
+				return function (val) {
+					return new Promise((resolve, reject) => {
+						setTimeout(function () {
+							resolve(i + (val || 0));
+						}, i * 250);
+					});
+				};
+			});
+			asyncfns[2] = (val) => 3 + val;
+			Promisie.series(...asyncfns)
+				.then(result => {
+					expect(result).to.equal(15);
+					done();
+				}, done);
+		});
+		it('Should reject with an error if series contains any non-functions', done => {
+			let asyncfns = [1, 2, 3, 4, 5].map(i => {
+				return function (val) {
+					return new Promise((resolve, reject) => {
+						setTimeout(function () {
+							resolve(i + (val || 0));
+						}, i * 250);
+					});
+				};
+			});
+			asyncfns[2] = false;
+			Promisie.series(asyncfns)
+				.then(() => {
+					done(new Error('Should have rejected with an error'));
+				}, e => {
+					expect(e instanceof Error).to.be.true;
+					done();
+				});
+		});
+		it('Should handle an error in one of the functions in the series', done => {
+			let asyncfns = [1, 2, 3, 4, 5].map(i => {
+				return function (val) {
+					return new Promise((resolve, reject) => {
+						setTimeout(function () {
+							if (i === 3) reject(i);
+							else resolve(i + (val || 0));
+						}, i * 250);
+					});
+				};
+			});
+			Promisie.series(asyncfns)
+				.then(() => {
+					done(new Error('Should have rejected with an error'));
+				}, e => {
+					expect(e).to.equal(3);
+					done();
+				});
+		});
+	});
+	describe('Static method pipe and compose testing', function () {
+		this.timeout(15000);
+		it('Should return a function will pass arguments to the first function in a series', done => {
+			let asyncfns = [1, 2, 3, 4, 5].map(i => {
+				return function (val) {
+					return new Promise((resolve, reject) => {
+						setTimeout(function () {
+							resolve(i + (val || 0));
+						}, i * 250);
+					});
+				};
+			});
+			let pipe = Promisie.pipe(asyncfns);
+			pipe(4)
+				.then(result => {
+					expect(result).to.equal(20);
+					done();
+				}, done);
 		});
 	});
 });

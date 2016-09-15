@@ -1,0 +1,27 @@
+{
+  "curly": false,
+  "esversion": 6,
+  "noempty": true,
+  "newcap": true,
+  "eqeqeq": true,
+  "eqnull": true,
+  "undef": true,
+  "devel": true,
+  "node": true,
+  "browser": true,
+  "evil": false,
+  "latedef": true,
+  "nonew": true,
+  "trailing": true,
+  "immed": true,
+  "smarttabs": true,
+  "strict": true,
+  "predef": [
+    "describe",
+    "it",
+    "before",
+    "beforeEach",
+    "after",
+    "afterEach"
+  ]
+}
