@@ -259,9 +259,60 @@ describe('Promisie test', function () {
 				});
 		});
 	});
+	describe('.try method testing', function () {
+		this.timeout(10000);
+		it('Should be chainable', done => {
+			(function () {
+				return new Promisie((resolve) => {
+					setTimeout(function () {
+						resolve();
+					}, 2500);
+				});
+			})()
+				.then(() => {
+					return new Promisie((resolve) => {
+						setTimeout(function () {
+							resolve();
+						}, 1000);
+					});
+				})
+				.try(() => {
+					return new Promisie((resolve) => {
+						setTimeout(function () {
+							resolve('hello');
+						}, 1000);
+					});
+				})
+				.then(data => {
+					expect(data).to.equal('hello');
+					done();
+				})
+				.catch(done);
+		});
+		it('Should handle an error', done => {
+			(function () {
+				return new Promisie((resolve) => {
+					setTimeout(function () {
+						resolve();
+					}, 2500);
+				});
+			})()
+				.try(() => {
+					throw new Error('test error');
+				})
+				.then(() => {
+					done(new Error('Should not get here'));
+				})
+				.catch(e => {
+					expect(e instanceof Error).to.be.true;
+					expect(e.message).to.equal('test error');
+					done();
+				});
+		});
+	});
 	describe('Static method pipe and compose testing', function () {
 		this.timeout(15000);
-		it('Should return a function will pass arguments to the first function in a series', done => {
+		it('Pipe should return a function that will pass arguments to the first function in a series', done => {
 			let asyncfns = [1, 2, 3, 4, 5].map(i => {
 				return function (val) {
 					return new Promise((resolve, reject) => {
@@ -272,11 +323,30 @@ describe('Promisie test', function () {
 				};
 			});
 			let pipe = Promisie.pipe(asyncfns);
-			pipe(4)
-				.then(result => {
+			pipe(5)
+				.try(result => {
 					expect(result).to.equal(20);
 					done();
-				}, done);
+				})
+				.catch(done);
+		});
+		it('Compose should reverse and return a function that will pass arguments to the first function in a series', done => {
+			let asyncfns = [1, 2, 3, 4, 5].map(i => {
+				return function (val) {
+					return new Promise((resolve, reject) => {
+						setTimeout(function () {
+							resolve(i + (val || 0));
+						}, i * 250);
+					});
+				};
+			});
+			let compose = Promisie.compose(asyncfns);
+			compose(5)
+				.try(result => {
+					expect(result).to.equal(20);
+					done();
+				})
+				.catch(done);
 		});
 	});
 });

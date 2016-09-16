@@ -1,9 +1,9 @@
 # Promisie
 Promisie is an extension of the ES6 native Promise class that provides helpful static methods that are seen in many other Promise libraries
 ### Version
-1.1.5
+1.2.0
 ### Installation
-Because Promisie uses native ES6 Promises and classes you must be running Node v4.2.4 or above
+Because Promisie uses native ES6 Promises, classes and spread operators you must be running Node v6.0.0 or above
 ```sh
 $ npm i promisie
 ```
@@ -29,6 +29,20 @@ readFileAsync('/some/file/path')
 /*
 This would normally halt the execution of your async code because of an unhandled error but the "try" method properly rejects with the error
  */
+/*
+Promisie also has a series static method which runs and array of functions in series passing the result of each function to the next function.
+Additionally there are pipe and compose static methods which return a function expecting arguments that will be passed to the first function in the series (compose reverses the order of the functions it is passed)
+*/
+let array_of_functions = [fn, fn1, fn2, fn3];
+Promisie.series(array_of_functions)
+    .then(result => {
+        //result is the resolved value of the last function in the array
+    })
+let pipe = Promisie.pipe(array_of_functions);
+pipe('some', 'random', 'arguments')
+    .then(result => {
+        //result is still the resolved value of the last function in the array with the difference being the first function will be passed the arguments of pipe()
+    })
 ```
 ### Testing
 ```sh

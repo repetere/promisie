@@ -1,7 +1,7 @@
 {
   "name": "promisie",
-  "version": "1.1.5",
-  "description": "promisify using es6 promises",
+  "version": "1.2.0",
+  "description": "helpful add-on functionality for es6 Promises",
   "main": "index.js",
   "scripts": {
     "test": "mocha test ./test/test.js",
@@ -15,6 +15,10 @@
     "es6 promise",
     "es6 class",
     "async",
+    "series",
+    "pipe",
+    "compose",
+    "generator",
     "try/catch"
   ],
   "author": "Jan Bialostok <janbialostok@gmail.com>",

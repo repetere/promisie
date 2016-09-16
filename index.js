@@ -24,6 +24,19 @@ var _series = function (operations, cb) {
 };
 
 class Promisie extends Promise {
+  constructor (options) {
+    super(options);
+    this.try = (onSuccess, onFailure) => {
+      return super.then(data => {
+        try {
+          return (typeof onSuccess === 'function') ? onSuccess(data) : null;
+        }
+        catch (e) {
+          return Promise.reject(e);
+        }
+      }, e => (typeof onFailure === 'function') ? onFailure(e) : null);
+    };
+  }
 	static promisify (fn, _this) {
 	  if (typeof fn !== 'function') throw new TypeError('ERROR: promisify must be called with a function');
 	  else {
@@ -53,16 +66,6 @@ class Promisie extends Promise {
   	}
   	else throw new TypeError('ERROR: promisifyAll must be called with an object or array');
   }
-  try (onSuccess, onFailure) {
-    return this.then(data => {
-      try {
-        return (typeof onSuccess === 'function') ? onSuccess(data) : null;
-      }
-      catch (e) {
-        return Promise.reject(e);
-      }
-    }, e => (typeof onFailure === 'function') ? onFailure(e) : null);
-  }
   static series (fns) {
     let operations = (Array.isArray(fns)) ? fns : [...arguments];
     return Promisie.promisify(_series)(operations);
@@ -74,8 +77,9 @@ class Promisie extends Promise {
     }
     return function () {
       let argv = arguments;
+      let first = operations[0];
       operations[0] = function () {
-        return operations[0](...argv);
+        return first(...argv);
       };
       return Promisie.promisify(_series)(operations);
     };
