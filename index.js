@@ -6,20 +6,7 @@ var _series = function (operations, cb) {
     if (typeof operations[i] !== 'function') return cb(new TypeError(`ERROR: series can only be called with functions - argument ${i}: ${operations[i]}`));
   }
   let operator = utility.series_generator(operations);
-  let iterate = function (state) {
-    let ret;
-    try {
-      ret = operator.next(state);
-    }
-    catch (e) {
-      cb(e);
-    }
-    if (!ret.done) {
-      if (ret.value instanceof Promise) ret.value.then(iterate, cb);
-      else setTimeout(iterate.bind(null, ret.value), 0);
-    }
-    else cb(null, ret.value);
-  };
+  let iterate = utility.series_iterator(operator, cb);
   iterate();
 };
 
