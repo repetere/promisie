@@ -10,6 +10,21 @@ var _series = function (operations, cb) {
   iterate();
 };
 
+var _map = function (operations, concurrency, cb) {
+  if (!Array.isArray(operations)) cb(new TypeError('ERROR: map can only be called with an Array'));
+  cb = (typeof concurrency === 'function') ? concurrency : cb;
+  let operator;
+  let iterate;
+  if (typeof concurrency !== 'number' || concurrency === 0) operator = utility.series_generator(operations);
+  else {
+    let divisions = utility.divide(operations, concurrency);
+    console.log({ divisions });
+    operator = utility.series_generator(divisions);
+  }
+  iterate = utility.series_iterator(operator, cb);
+  iterate();
+};
+
 class Promisie extends Promise {
   constructor (options) {
     super(options);
@@ -70,6 +85,23 @@ class Promisie extends Promise {
       };
       return Promisie.promisify(_series)(operations);
     };
+  }
+  static map(datas, concurrency, fn) {
+    try {
+      fn = (typeof concurrency === 'function') ? concurrency : fn;
+      let operations = datas.map(data => {
+        return function (state) {
+          state = (Array.isArray(state)) ? state : [];
+          return Promisie.resolve(fn(data))
+            .try(resolved => state.concat(resolved))
+            .catch(e => Promise.reject(e));
+        };
+      });
+      return Promisie.promisify(_map)(operations, concurrency);
+    }
+    catch (e) {
+      return Promise.reject(e);
+    }
   }
   static compose (fns) {
     let operations = (Array.isArray(fns)) ? fns : [...arguments];
