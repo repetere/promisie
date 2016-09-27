@@ -2,4 +2,6 @@
 const series_generator = require('./generator');
 const series_iterator = require('./iterator');
 
-module.exports = { series_generator, series_iterator };
+module.exports = function (promisie) {
+  return { series_generator, series_iterator: series_iterator(promisie) };
+};

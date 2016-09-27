@@ -1,5 +1,5 @@
 'use strict';
-const utility = require('./utility/index');
+var utility = require('./utility/index');
 
 var _series = function (operations, cb) {
   for (let i = 0; i < operations.length; i++) {
@@ -80,5 +80,7 @@ class Promisie extends Promise {
     return Promisie.pipe(operations);
   }
 }
+
+utility = utility(Promisie);
 
 module.exports = Promisie;

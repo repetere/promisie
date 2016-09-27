@@ -1,7 +1,9 @@
 'use strict';
 
-module.exports = function (generator, cb) {
-  return function iterate (state) {
+var Promisie;
+
+var iterator = function (generator, cb) {
+  return function iterate(state) {
     let current;
     try {
       current = generator.next(state);
@@ -10,7 +12,7 @@ module.exports = function (generator, cb) {
       cb(e);
     }
     if (!current.done) {
-      if (current.value instanceof Promise) current.value.then(iterate, cb);
+      if (current.value instanceof Promise || current.value instanceof Promisie) current.value.then(iterate, cb);
       else {
         let timeout = setTimeout(() => {
           iterate(current.value);
@@ -20,4 +22,9 @@ module.exports = function (generator, cb) {
     }
     else cb(null, current.value);
   };
+};
+
+module.exports = function (promisie) {
+  Promisie = promisie;
+  return iterator;
 };
