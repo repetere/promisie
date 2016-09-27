@@ -68,7 +68,8 @@ class Promisie extends Promise {
       operations[0] = function () {
         return first(...argv);
       };
-      return Promisie.promisify(_series)(operations);
+      let _operations = Object.assign([], operations);
+      return Promisie.promisify(_series)(_operations);
     };
   }
   static compose (fns) {
