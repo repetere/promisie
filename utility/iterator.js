@@ -11,7 +11,7 @@ var iterator = function (generator, cb) {
     catch (e) {
       cb(e);
     }
-    if (!current.done) {
+    if (current && !current.done) {
       if (current.value instanceof Promise || current.value instanceof Promisie) current.value.then(iterate, cb);
       else {
         let timeout = setTimeout(() => {
@@ -20,6 +20,7 @@ var iterator = function (generator, cb) {
         }, 0);
       }
     }
+    else if (!current) cb(new Error('ERROR: generator returned \'undefined\' value and is not iterable'));
     else cb(null, current.value);
   };
 };
