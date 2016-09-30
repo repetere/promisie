@@ -64,11 +64,11 @@ class Promisie extends Promise {
     }
     return function () {
       let argv = arguments;
-      let first = operations[0];
-      operations[0] = function () {
+      let _operations = Object.assign([], operations);
+      let first = _operations[0];
+      _operations[0] = function () {
         return first(...argv);
       };
-      let _operations = Object.assign([], operations);
       return Promisie.promisify(_series)(_operations);
     };
   }
