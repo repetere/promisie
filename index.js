@@ -82,6 +82,4 @@ class Promisie extends Promise {
   }
 }
 
-utility = utility(Promisie);
-
 module.exports = Promisie;

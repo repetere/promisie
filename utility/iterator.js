@@ -1,7 +1,5 @@
 'use strict';
 
-var Promisie;
-
 var iterator = function (generator, cb) {
   return function iterate(state) {
     let current;
@@ -12,7 +10,7 @@ var iterator = function (generator, cb) {
       cb(e);
     }
     if (current && !current.done) {
-      if (current.value instanceof Promise || current.value instanceof Promisie) current.value.then(iterate, cb);
+      if (current.value && typeof current.value.then === 'function' && typeof current.value.catch === 'function') current.value.then(iterate, cb);
       else {
         let timeout = setTimeout(() => {
           iterate(current.value);
@@ -25,7 +23,4 @@ var iterator = function (generator, cb) {
   };
 };
 
-module.exports = function (promisie) {
-  Promisie = promisie;
-  return iterator;
-};
+module.exports = iterator;
