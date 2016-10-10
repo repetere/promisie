@@ -3,6 +3,7 @@
 require('mocha');
 let path = require('path'),
 	chai = require('chai'),
+	fs = require('fs'),
 	expect = chai.expect,
 	Promisie = require(path.resolve(__dirname, '../index'));
 
@@ -182,6 +183,17 @@ describe('Promisie test', function () {
 						expect(e instanceof Error).to.be.true;
 						done();
 					});
+			});
+			it('Should be able to promisifyAll on core node modules', function (done) {
+				try {
+					let fsAsync = Promisie.promisifyAll(fs, undefined, { recursive: false, readonly: true });
+					expect(fsAsync).to.be.an('object');
+					expect(fsAsync.readFileAsync).to.be.a('function');
+					done();
+				}
+				catch (e) {
+					done(e);
+				}
 			});
 		});
 	});

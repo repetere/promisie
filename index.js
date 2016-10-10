@@ -10,6 +10,16 @@ var _series = function (operations, cb) {
   iterate();
 };
 
+var assignWithReadOnly = function (data) {
+  let result = {};
+  for (let key in data) {
+    let descriptor = Object.getOwnPropertyDescriptor(data, key);
+    let isReadOnly = !descriptor.writable;
+    if (!isReadOnly) result[key] = data[key];
+  } 
+  return result;
+};
+
 class Promisie extends Promise {
   constructor (options) {
     super(options);
@@ -41,13 +51,16 @@ class Promisie extends Promise {
       else return promisified;
 	  }
   }
-  static promisifyAll (mod, _this) {
+  static promisifyAll (mod, _this, options = { recursive: true, readonly: false }) {
   	if (mod && typeof mod === 'object') {
-  		let promisified = Object.create(mod);
-      promisified = Object.assign((promisified && typeof promisified === 'object') ? promisified : {}, mod);
+      let promisified = Object.create(mod);
+      if (!options.readonly) promisified = Object.assign((promisified && typeof promisified === 'object') ? promisified : {}, mod);
+      else promisified = assignWithReadOnly(mod);
 	  	Object.keys(promisified).forEach(key => {
-	  		if (typeof promisified[key] === 'function') promisified[key + 'Async'] = (_this) ? this.promisify(promisified[key]).bind(_this) : this.promisify(promisified[key]);
-        if (promisified[key] && typeof promisified[key] === 'object') promisified[key] = this.promisifyAll(promisified[key], _this); 
+        if (typeof promisified[key] === 'function') promisified[key + 'Async'] = (_this) ? this.promisify(promisified[key]).bind(_this) : this.promisify(promisified[key]);
+        if ((typeof options === 'boolean' && options) || (options && options.recursive)) {
+          if (promisified[key] && typeof promisified[key] === 'object') promisified[key] = this.promisifyAll(promisified[key], _this, options);
+        }
 	  	});
   		return promisified;
   	}
