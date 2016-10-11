@@ -1,5 +1,5 @@
 'use strict';
-const utility = require('./utility/index');
+var utility = require('./utility/index');
 
 var _series = function (operations, cb) {
   for (let i = 0; i < operations.length; i++) {
@@ -15,21 +15,30 @@ var _map = function (operations, concurrency, cb) {
   cb = (typeof concurrency === 'function') ? concurrency : cb;
   let operator;
   let iterate;
-  if (typeof concurrency !== 'number' || concurrency === 0) operator = utility.series_generator(operations);
+  if (typeof concurrency !== 'number' || concurrency === 0) operator = utility.series_generator([operations]);
   else {
     let divisions = utility.divide(operations, concurrency);
-    console.log({ divisions });
     operator = utility.series_generator(divisions);
   }
   iterate = utility.series_iterator(operator, cb);
-  iterate();
+  iterate([]);
+};
+
+var assignWithReadOnly = function (data) {
+  let result = {};
+  for (let key in data) {
+    let descriptor = Object.getOwnPropertyDescriptor(data, key);
+    let isReadOnly = !descriptor.writable;
+    if (!isReadOnly) result[key] = data[key];
+  } 
+  return result;
 };
 
 class Promisie extends Promise {
   constructor (options) {
     super(options);
     this.try = (onSuccess, onFailure) => {
-      return super.then(data => {
+      return this.then(data => {
         try {
           return (typeof onSuccess === 'function') ? onSuccess(data) : null;
         }
@@ -56,13 +65,16 @@ class Promisie extends Promise {
       else return promisified;
 	  }
   }
-  static promisifyAll (mod, _this) {
+  static promisifyAll (mod, _this, options = { recursive: true, readonly: false }) {
   	if (mod && typeof mod === 'object') {
-  		let promisified = Object.create(mod);
-      promisified = Object.assign((promisified && typeof promisified === 'object') ? promisified : {}, mod);
+      let promisified = Object.create(mod);
+      if (!options.readonly) promisified = Object.assign((promisified && typeof promisified === 'object') ? promisified : {}, mod);
+      else promisified = assignWithReadOnly(mod);
 	  	Object.keys(promisified).forEach(key => {
-	  		if (typeof promisified[key] === 'function') promisified[key + 'Async'] = (_this) ? this.promisify(promisified[key]).bind(_this) : this.promisify(promisified[key]);
-        if (promisified[key] && typeof promisified[key] === 'object') promisified[key] = this.promisifyAll(promisified[key], _this); 
+        if (typeof promisified[key] === 'function') promisified[key + 'Async'] = (_this) ? this.promisify(promisified[key]).bind(_this) : this.promisify(promisified[key]);
+        if ((typeof options === 'boolean' && options) || (options && options.recursive)) {
+          if (promisified[key] && typeof promisified[key] === 'object') promisified[key] = this.promisifyAll(promisified[key], _this, options);
+        }
 	  	});
   		return promisified;
   	}
@@ -77,31 +89,23 @@ class Promisie extends Promise {
     for (let i = 0; i < operations.length; i++) {
       if (typeof operations[i] !== 'function') throw new TypeError(`ERROR: pipe can only be called with functions - argument ${i}: ${operations[i]}`);
     }
-    return function () {
+    return function pipe () {
       let argv = arguments;
-      let first = operations[0];
-      operations[0] = function () {
+      let _operations = Object.assign([], operations);
+      let first = _operations[0];
+      _operations[0] = function () {
         return first(...argv);
       };
-      return Promisie.promisify(_series)(operations);
+      return Promisie.promisify(_series)(_operations);
     };
   }
-  static map(datas, concurrency, fn) {
-    try {
-      fn = (typeof concurrency === 'function') ? concurrency : fn;
-      let operations = datas.map(data => {
-        return function (state) {
-          state = (Array.isArray(state)) ? state : [];
-          return Promisie.resolve(fn(data))
-            .try(resolved => state.concat(resolved))
-            .catch(e => Promise.reject(e));
-        };
-      });
-      return Promisie.promisify(_map)(operations, concurrency);
+  static map (datas, concurrency, fn) {
+    if (typeof concurrency === 'function') {
+      fn = concurrency;
+      concurrency = undefined;
     }
-    catch (e) {
-      return Promise.reject(e);
-    }
+    let operations = datas.map(data => fn(data));
+    return Promisie.promisify(_map)(operations, concurrency);
   }
   static compose (fns) {
     let operations = (Array.isArray(fns)) ? fns : [...arguments];
@@ -110,6 +114,9 @@ class Promisie extends Promise {
     }
     operations = operations.reverse();
     return Promisie.pipe(operations);
+  }
+  static all () {
+    return super.all([...arguments]);
   }
 }
 

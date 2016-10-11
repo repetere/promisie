@@ -1,6 +1,7 @@
 'use strict';
 
-module.exports = function (generator, cb) {
+var iterator = function (generator, cb) {
+  let _transform;
   return function iterate (state) {
     let current;
     try {
@@ -9,8 +10,8 @@ module.exports = function (generator, cb) {
     catch (e) {
       cb(e);
     }
-    if (!current.done) {
-      if (current.value instanceof Promise) current.value.then(iterate, cb);
+    if (current && !current.done) {
+      if (current.value && typeof current.value.then === 'function' && typeof current.value.catch === 'function') current.value.then(iterate, cb);
       else {
         let timeout = setTimeout(() => {
           iterate(current.value);
@@ -18,6 +19,9 @@ module.exports = function (generator, cb) {
         }, 0);
       }
     }
+    else if (!current) cb(new Error('ERROR: generator returned \'undefined\' value and is not iterable'));
     else cb(null, current.value);
   };
 };
+
+module.exports = iterator;
