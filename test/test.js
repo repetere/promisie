@@ -1,11 +1,21 @@
 'use strict';
 
 require('mocha');
-let path = require('path'),
+var path = require('path'),
 	chai = require('chai'),
 	fs = require('fs'),
 	expect = chai.expect,
 	Promisie = require(path.resolve(__dirname, '../index'));
+
+var asyncfn = function (time, val) {
+	return function () {
+		return new Promisie(resolve => {
+			let timeout = setTimeout(function () {
+				resolve(val);
+			}, time);
+		});
+	};
+};
 
 describe('Promisie test', function () {
 	describe('Basic assertions', function () {
@@ -409,6 +419,61 @@ describe('Promisie test', function () {
 					done();
 				})
 				.catch(done);
+		});
+		it('Should also be a chainable method', done => {
+			let mapfn = asyncfn(250, [1, 2, 3]);
+			mapfn()
+				.map(function (data) {
+					return asyncfn(250, data + 1)();
+				})
+				.then(result => {
+					expect(result).to.deep.equal([2, 3, 4]);
+					done();
+				}, done);
+		});
+	});
+	describe('.spread method testing', function () {
+		it('Should spread any iterable value so the next function is called with the array values as arguments', done => {
+			let arr_resolver = asyncfn(250, [1, 2, 3]);
+			arr_resolver()
+				.spread(function () {
+					let argv = [...arguments];
+					expect(Array.isArray(arguments)).to.be.false;
+					expect(argv).to.deep.equal([1, 2, 3]);
+					done();
+				})
+				.catch(done);
+		});
+		it('Should be chainable', done => {
+			let arr_resolver = asyncfn(250, [1, 2, 3]);
+			arr_resolver()
+				.spread(function () {
+					let argv = [...arguments];
+					return argv;
+				})
+				.then(result => result)
+				.spread(function (one, two, three) {
+					expect([one, two, three]).to.deep.equal([1, 2, 3]);
+					done();
+				})
+				.catch(done);
+		});
+	});
+	describe('.all static method testing', function () {
+		let arrfns = [asyncfn(250, 1), asyncfn(250, 2)];
+		it('Should handle a normal iterable', done => {
+			Promisie.all(arrfns.map(fn => fn()))
+				.then(result => {
+					expect(result).to.deep.equal([1, 2]);
+					done();
+				}, done);
+		});
+		it('Should handle an argument list', done => {
+			Promisie.all(arrfns[0](), arrfns[1]())
+				.then(result => {
+					expect(result).to.deep.equal([1, 2]);
+					done();
+				}, done);
 		});
 	});
 });

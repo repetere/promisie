@@ -49,8 +49,20 @@ class Promisie extends Promise {
     };
     this.spread = (onSuccess, onFailure) => {
       return this.then(data => {
+        if (typeof data[Symbol.iterator] !== 'function') return Promise.reject(new TypeError('ERROR: spread expects input to be iterable'));
         if (typeof onSuccess !== 'function') return Promise.reject(new TypeError('ERROR: spread expects onSuccess handler to be a function'));
         return onSuccess(...data);
+      }, e => (typeof onFailure === 'function') ? onFailure(e) : null);
+    };
+    this.map = (onSuccess, onFailure, concurrency) => {
+      if (typeof onFailure === 'number') {
+        concurrency = onFailure;
+        onFailure = undefined;
+      }
+      return this.then(data => {
+        if (!Array.isArray(data)) return Promise.reject(new TypeError('ERROR: map expects input to be an array'));
+        if (typeof onSuccess !== 'function') return Promise.reject(new TypeError('ERROR: map expects onSuccess handler to be a function'));
+        return Promisie.map(data, concurrency, onSuccess);
       }, e => (typeof onFailure === 'function') ? onFailure(e) : null);
     };
   }
@@ -122,7 +134,10 @@ class Promisie extends Promise {
     return Promisie.pipe(operations);
   }
   static all () {
-    return super.all([...arguments]);
+    let argv = [...arguments];
+    if (argv.length === 1 && Array.isArray(argv[0])) return super.all(argv[0]);
+    else if (argv.length === 1 && typeof argv[0][Symbol.iterator] === 'function') return super.all([...argv[0]]);
+    else return super.all([...arguments]);
   }
 }
 

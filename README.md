@@ -1,7 +1,7 @@
 # Promisie
 Promisie is an extension of the ES6 native Promise class that provides helpful static methods that are seen in many other Promise libraries
 ### Version
-1.2.0
+1.4.1
 ### Installation
 Because Promisie uses native ES6 Promises, classes and spread operators you must be running Node v6.0.0 or above
 ```sh
