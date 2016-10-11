@@ -10,6 +10,20 @@ var _series = function (operations, cb) {
   iterate();
 };
 
+var _map = function (operations, concurrency, cb) {
+  if (!Array.isArray(operations)) cb(new TypeError('ERROR: map can only be called with an Array'));
+  cb = (typeof concurrency === 'function') ? concurrency : cb;
+  let operator;
+  let iterate;
+  if (typeof concurrency !== 'number' || concurrency === 0) operator = utility.series_generator([operations]);
+  else {
+    let divisions = utility.divide(operations, concurrency);
+    operator = utility.series_generator(divisions);
+  }
+  iterate = utility.series_iterator(operator, cb);
+  iterate([]);
+};
+
 var assignWithReadOnly = function (data) {
   let result = {};
   for (let key in data) {
@@ -81,7 +95,7 @@ class Promisie extends Promise {
     for (let i = 0; i < operations.length; i++) {
       if (typeof operations[i] !== 'function') throw new TypeError(`ERROR: pipe can only be called with functions - argument ${i}: ${operations[i]}`);
     }
-    return function () {
+    return function pipe () {
       let argv = arguments;
       let _operations = Object.assign([], operations);
       let first = _operations[0];
@@ -91,6 +105,14 @@ class Promisie extends Promise {
       return Promisie.promisify(_series)(_operations);
     };
   }
+  static map (datas, concurrency, fn) {
+    if (typeof concurrency === 'function') {
+      fn = concurrency;
+      concurrency = undefined;
+    }
+    let operations = datas.map(data => fn(data));
+    return Promisie.promisify(_map)(operations, concurrency);
+  }
   static compose (fns) {
     let operations = (Array.isArray(fns)) ? fns : [...arguments];
     for (let i = 0; i < operations.length; i++) {
@@ -98,6 +120,9 @@ class Promisie extends Promise {
     }
     operations = operations.reverse();
     return Promisie.pipe(operations);
+  }
+  static all () {
+    return super.all([...arguments]);
   }
 }
 

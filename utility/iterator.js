@@ -1,7 +1,8 @@
 'use strict';
 
 var iterator = function (generator, cb) {
-  return function iterate(state) {
+  let _transform;
+  return function iterate (state) {
     let current;
     try {
       current = generator.next(state);

@@ -361,4 +361,54 @@ describe('Promisie test', function () {
 				.catch(done);
 		});
 	});
+	describe('.map method testing', function () {
+		this.timeout(15000);
+		let arr = [1, 2, 3, 4, 5];
+		it('Should resolve with fully resolved array if concurrency isn\'t passed', done => {
+			Promisie.map(arr, val => {
+				return new Promise(resolve => {
+					let timeout = setTimeout(() => {
+						resolve(val);
+						clearTimeout(timeout);
+					}, 250);
+				});
+			})
+				.try(resolved => {
+					expect(resolved).to.deep.equal(arr);
+					done();
+				})
+				.catch(done);
+		});
+		it('Should handle rejection when concurrency isn\'t passed', done => {
+			Promisie.map(arr, val => {
+				return new Promise((resolve, reject) => {
+					let timeout = setTimeout(() => {
+						reject(val);
+						clearTimeout(timeout);
+					}, 1000);
+				});
+			})
+				.then(val => {
+					done(new Error('Should not get here'));
+				}, e => {
+					expect(e).to.equal(1);
+					done();
+				});
+		});
+		it('Should resolve after running operations with a concurrency limit', done => {
+			Promisie.map(arr, 2, val => {
+				return new Promise(resolve => {
+					let timeout = setTimeout(() => {
+						resolve(val);
+						clearTimeout(timeout);
+					}, 1000);
+				});
+			})
+				.try(resolved => {
+					expect(resolved).to.deep.equal(arr);
+					done();
+				})
+				.catch(done);
+		});
+	});
 });
