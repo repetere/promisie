@@ -24,13 +24,19 @@ class Promisie extends Promise {
   constructor (options) {
     super(options);
     this.try = (onSuccess, onFailure) => {
-      return super.then(data => {
+      return this.then(data => {
         try {
           return (typeof onSuccess === 'function') ? onSuccess(data) : null;
         }
         catch (e) {
           return Promise.reject(e);
         }
+      }, e => (typeof onFailure === 'function') ? onFailure(e) : null);
+    };
+    this.spread = (onSuccess, onFailure) => {
+      return this.then(data => {
+        if (typeof onSuccess !== 'function') return Promise.reject(new TypeError('ERROR: spread expects onSuccess handler to be a function'));
+        return onSuccess(...data);
       }, e => (typeof onFailure === 'function') ? onFailure(e) : null);
     };
   }
