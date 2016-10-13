@@ -537,4 +537,19 @@ describe('Promisie test', function () {
 				}, done);
 		});
 	});
+	describe('.parallel method testing', function () {
+		it('Should resolve an object in parallel', done => {
+			let operations = {
+				'hello': asyncfn(250, 'world'),
+				'foo': asyncfn(500, 'bar')
+			};
+			Promisie.parallel(operations)
+				.try(result => {
+					console.log({ result });
+					expect(result).to.deep.equal({ hello: 'world', 'foo': 'bar' });
+					done();
+				})
+				.catch(done);
+		});
+	});
 });

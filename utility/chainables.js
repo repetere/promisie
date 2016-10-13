@@ -1,28 +1,33 @@
 'use strict';
 
+var setHandlers = function (success, failure) {
+  return {
+    success,
+    failure: (typeof failure === 'function') ? failure : undefined
+  };
+};
+
 const CHAINABLES = {
   try: function (resources) {
     return function (onSuccess, onFailure) {
-      let success = function (data) {
+      let { success, failure } = setHandlers(function (data) {
         try {
           return (typeof onSuccess === 'function') ? onSuccess(data) : null;
         }
         catch (e) {
           return Promise.reject(e);
         }
-      };
-      let failure = (typeof onFailure === 'function') ? onFailure : undefined;
+      }, onFailure);
       return this.then(success, failure);
     };
   },
   spread: function (resources) {
     return function (onSuccess, onFailure) {
-      let success = function (data) {
+      let { success, failure } = setHandlers(function (data) {
         if (typeof data[Symbol.iterator] !== 'function') return Promise.reject(new TypeError('ERROR: spread expects input to be iterable'));
         if (typeof onSuccess !== 'function') return Promise.reject(new TypeError('ERROR: spread expects onSuccess handler to be a function'));
         return onSuccess(...data);
-      };
-      let failure = (typeof onFailure === 'function') ? onFailure : undefined;
+      }, onFailure);
       return this.then(success, failure);
     };
   },
@@ -32,12 +37,11 @@ const CHAINABLES = {
         concurrency = onFailure;
         onFailure = undefined;
       }
-      let success = function (data) {
+      let { success, failure } = setHandlers(function (data) {
         if (!Array.isArray(data)) return Promise.reject(new TypeError('ERROR: map expects input to be an array'));
         if (typeof onSuccess !== 'function') return Promise.reject(new TypeError('ERROR: map expects onSuccess handler to be a function'));
         return resources.Promisie.map(data, concurrency, onSuccess);
-      };
-      let failure = (typeof onFailure === 'function') ? onFailure : undefined;
+      }, onFailure);
       return this.then(success, failure);
     };
   },
@@ -47,12 +51,11 @@ const CHAINABLES = {
         concurrency = onFailure;
         onFailure = undefined;
       }
-      let success = function (data) {
+      let { success, failure } = setHandlers(function (data) {
         if (!Array.isArray(data)) return Promise.reject(new TypeError('ERROR: each expects input to be an array'));
         if (typeof onSuccess !== 'function') return Promise.reject(new TypeError('ERROR: each expects onSuccess handler to be a function'));
         return resources.Promisie.each(data, concurrency, onSuccess);
-      };
-      let failure = (typeof onFailure === 'function') ? onFailure : undefined;
+      }, onFailure);
       return this.then(success, failure);
     };
   }

@@ -24,6 +24,31 @@ var _map = function (operations, concurrency, cb) {
   iterate([]);
 };
 
+var _parallel = function (fns, args) {
+  let index = 0;
+  let keys = Object.keys(fns);
+  let result = {};
+  fns[Symbol.iterator] = function* () {
+    while (index < keys.length) {
+      let currentIndex = index;
+      let invoked = (Array.isArray(args)) ? fns[keys[index++]](...args) : fns[keys[index++]](args);
+      if (invoked && typeof invoked.then === 'function' && typeof invoked.catch === 'function') {
+        yield invoked
+          .then(value => {
+            result[keys[currentIndex]] = value;
+            return value;
+          }, e => Promise.reject(e));
+      }
+      else {
+        result[keys[currentIndex]] = invoked;
+        yield invoked;
+      }
+    }
+  };
+  return this.all(fns)
+    .then(() => result, e => Promise.reject(e));
+};
+
 var assignWithReadOnly = function (data) {
   let result = {};
   for (let key in data) {
@@ -102,6 +127,10 @@ class Promisie extends Promise {
   static each (datas, concurrency, fn) {
     return Promisie.map(datas, concurrency, fn)
       .then(() => datas, e => Promise.reject(e));
+  }
+  static parallel (fns, args) {
+    if (Array.isArray(fns)) return Promisie.all(fns);
+    else return _parallel.call(Promisie, fns, args);
   }
   static compose (fns) {
     let operations = (Array.isArray(fns)) ? fns : [...arguments];
