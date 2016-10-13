@@ -545,11 +545,23 @@ describe('Promisie test', function () {
 			};
 			Promisie.parallel(operations)
 				.try(result => {
-					console.log({ result });
 					expect(result).to.deep.equal({ hello: 'world', 'foo': 'bar' });
 					done();
 				})
 				.catch(done);
+		});
+		it('Should handle rejections', done => {
+			let operations = {
+				'hello': asyncfn(250, 'world'),
+				'foo': () => Promise.reject(new Error('Some Error'))
+			};
+			Promisie.parallel(operations)
+				.then(() => {
+					done(new Error('Should not resolve'));
+				}, e => {
+					expect(e instanceof Error).to.be.true;
+					done();
+				});
 		});
 	});
 });
