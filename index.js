@@ -25,8 +25,6 @@ var _map = function (operations, concurrency, cb) {
 };
 
 var _parallel = function (fns, args) {
-  let index = 0;
-  let keys = Object.keys(fns);
   let result = {};
   fns[Symbol.iterator] = utility.parallel_generator(fns, args, result);
   return this.all(fns)

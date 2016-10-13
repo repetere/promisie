@@ -1,6 +1,6 @@
 {
   "name": "promisie",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "description": "helpful add-on functionality for es6 Promises",
   "main": "index.js",
   "scripts": {
@@ -22,7 +22,9 @@
     "try/catch",
     "map",
     "all",
-    "spread"
+    "spread",
+    "parallel",
+    "each"
   ],
   "author": "Jan Bialostok <janbialostok@gmail.com>",
   "repository": {
