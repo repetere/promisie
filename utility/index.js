@@ -4,5 +4,6 @@ const series_iterator = require('./iterator');
 const divide = require('./divisions');
 const chainables = require('./chainables');
 const parallel_generator = require('./parallel_generator');
+const settle_generator = require('./settle_generator');
 
-module.exports = { series_generator, series_iterator, divide, chainables, parallel_generator };
+module.exports = { series_generator, series_iterator, divide, chainables, parallel_generator, settle_generator };

@@ -24,12 +24,23 @@ var _map = function (operations, concurrency, cb) {
   iterate([]);
 };
 
+var _settle = function (fns) {
+  let fulfilled = [];
+  let rejected = [];
+  fns[Symbol.iterator] = utility.settle_generator(fns, fulfilled, rejected);
+  return this.all(fns)
+    .then(() => {
+      return { fulfilled, rejected };
+    }, e => Promise.reject(e));
+};
+
 var _parallel = function (fns, args) {
   let result = {};
   fns[Symbol.iterator] = utility.parallel_generator(fns, args, result);
   return this.all(fns)
     .then(() => result, e => Promise.reject(e));
 };
+
 
 var assignWithReadOnly = function (data) {
   let result = {};
@@ -113,6 +124,9 @@ class Promisie extends Promise {
   static parallel (fns, args) {
     if (Array.isArray(fns)) return Promisie.all(fns);
     else return _parallel.call(Promisie, fns, args);
+  }
+  static settle (fns) {
+    return _settle.call(Promisie, fns);
   }
   static compose (fns) {
     let operations = (Array.isArray(fns)) ? fns : [...arguments];

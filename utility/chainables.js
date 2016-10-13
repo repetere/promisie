@@ -58,6 +58,17 @@ const CHAINABLES = {
       }, onFailure);
       return this.then(success, failure);
     };
+  },
+  settle: function (resources) {
+    return function (onSuccess, onFailure) {
+      let { success, failure } = setHandlers(function (data) {
+        if (!Array.isArray(data)) return Promise.reject(new TypeError('ERROR: settle expects input to be an array'));
+        if (typeof onSuccess !== 'function') return Promise.reject(new TypeError('ERROR: settle expects onSuccess handler to be a function'));
+        let operations = data.map(d => () => onSuccess(d));
+        return resources.Promisie.settle(operations);
+      }, onFailure);
+      return this.then(success, failure);
+    };
   }
 };
 

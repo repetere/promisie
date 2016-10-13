@@ -537,7 +537,7 @@ describe('Promisie test', function () {
 				}, done);
 		});
 	});
-	describe('.parallel method testing', function () {
+	describe('.parallel static method testing', function () {
 		it('Should resolve an object in parallel', done => {
 			let operations = {
 				'hello': asyncfn(250, 'world'),
@@ -562,6 +562,25 @@ describe('Promisie test', function () {
 					expect(e instanceof Error).to.be.true;
 					done();
 				});
+		});
+	});
+	describe('.settle method testing', function () {
+		it('Should always resolve and show rejected/resolved promises', done => {
+			let asyncfns = [asyncfn(500, true), function () {
+				return new Promise((resolve, reject) => {
+					setTimeout(function () {
+						reject(new Error('There was an error'));
+					}, 250);
+				});
+			}];
+			Promisie.settle(asyncfns)
+				.try(result => {
+					expect(result.fulfilled).to.be.an('array');
+					expect(result.rejected).to.be.an('array');
+					expect(result.rejected.length).to.equal(1);
+					expect(result.fulfilled.length).to.equal(1);
+					done();
+				}, done);
 		});
 	});
 });
