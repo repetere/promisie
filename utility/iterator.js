@@ -10,17 +10,18 @@ var iterator = function (generator, cb) {
     catch (e) {
       cb(e);
     }
-    if (current && !current.done) {
-      if (current.value && typeof current.value.then === 'function' && typeof current.value.catch === 'function') current.value.then(iterate, cb);
+    let { done, value } = current;
+    if (!done) {
+      if (value && typeof value.then === 'function' && typeof value.catch === 'function') value.then(iterate, cb);
       else {
         let timeout = setTimeout(() => {
-          iterate(current.value);
+          iterate(value);
           clearTimeout(timeout);
         }, 0);
       }
     }
     else if (!current) cb(new Error('ERROR: generator returned \'undefined\' value and is not iterable'));
-    else cb(null, current.value);
+    else cb(null, value);
   };
 };
 

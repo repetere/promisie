@@ -1,6 +1,6 @@
 {
   "name": "promisie",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "helpful add-on functionality for es6 Promises",
   "main": "index.js",
   "scripts": {

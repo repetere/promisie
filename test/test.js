@@ -167,7 +167,7 @@ describe('Promisie test', function () {
 		});
 		describe('promisifyAll functionality', function () {
 			this.timeout(20000);
-			let test = Promisie.promisifyAll(b);
+			let test = Promisie.promisifyAll(b, undefined, { recursive: true, readonly: false });
 			it('Should return Async methods that are instances of Promises', function () {
 				expect(test.cAsync('') instanceof Promise).to.be.true;
 				expect(test.dAsync('') instanceof Promise).to.be.true;
@@ -428,6 +428,67 @@ describe('Promisie test', function () {
 				})
 				.then(result => {
 					expect(result).to.deep.equal([2, 3, 4]);
+					done();
+				}, done);
+		});
+	});
+	describe('.each method testing', function () {
+		this.timeout(15000);
+		let arr = [1, 2, 3, 4, 5];
+		it('Should resolve with fully resolved array if concurrency isn\'t passed', done => {
+			Promisie.each(arr, val => {
+				return new Promise(resolve => {
+					let timeout = setTimeout(() => {
+						resolve(val + 1);
+						clearTimeout(timeout);
+					}, 250);
+				});
+			})
+				.try(resolved => {
+					expect(resolved).to.deep.equal(arr);
+					done();
+				})
+				.catch(done);
+		});
+		it('Should handle rejection when concurrency isn\'t passed', done => {
+			Promisie.each(arr, val => {
+				return new Promise((resolve, reject) => {
+					let timeout = setTimeout(() => {
+						reject(val);
+						clearTimeout(timeout);
+					}, 1000);
+				});
+			})
+				.then(val => {
+					done(new Error('Should not get here'));
+				}, e => {
+					expect(e).to.equal(1);
+					done();
+				});
+		});
+		it('Should resolve after running operations with a concurrency limit', done => {
+			Promisie.each(arr, 2, val => {
+				return new Promise(resolve => {
+					let timeout = setTimeout(() => {
+						resolve(val + 1);
+						clearTimeout(timeout);
+					}, 1000);
+				});
+			})
+				.try(resolved => {
+					expect(resolved).to.deep.equal(arr);
+					done();
+				})
+				.catch(done);
+		});
+		it('Should also be a chainable method', done => {
+			let eachfn = asyncfn(250, [1, 2, 3]);
+			eachfn()
+				.each(function (data) {
+					return asyncfn(250, data + 1)();
+				})
+				.then(result => {
+					expect(result).to.deep.equal([1, 2, 3]);
 					done();
 				}, done);
 		});

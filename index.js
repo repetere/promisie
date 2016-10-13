@@ -28,8 +28,7 @@ var assignWithReadOnly = function (data) {
   let result = {};
   for (let key in data) {
     let descriptor = Object.getOwnPropertyDescriptor(data, key);
-    let isReadOnly = !descriptor.writable;
-    if (!isReadOnly) result[key] = data[key];
+    if (descriptor && descriptor.writable) result[key] = data[key];
   } 
   return result;
 };
@@ -58,7 +57,7 @@ class Promisie extends Promise {
       else return promisified;
 	  }
   }
-  static promisifyAll (mod, _this, options = { recursive: true, readonly: false }) {
+  static promisifyAll (mod, _this, options = { recursive: false, readonly: true }) {
   	if (mod && typeof mod === 'object') {
       let promisified = Object.create(mod);
       if (!options.readonly) promisified = Object.assign((promisified && typeof promisified === 'object') ? promisified : {}, mod);
@@ -99,6 +98,10 @@ class Promisie extends Promise {
     }
     let operations = datas.map(data => fn(data));
     return Promisie.promisify(_map)(operations, concurrency);
+  }
+  static each (datas, concurrency, fn) {
+    return Promisie.map(datas, concurrency, fn)
+      .then(() => datas, e => Promise.reject(e));
   }
   static compose (fns) {
     let operations = (Array.isArray(fns)) ? fns : [...arguments];

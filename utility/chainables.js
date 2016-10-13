@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = {
+const CHAINABLES = {
   try: function (resources) {
     return function (onSuccess, onFailure) {
       let success = function (data) {
@@ -40,5 +40,22 @@ module.exports = {
       let failure = (typeof onFailure === 'function') ? onFailure : undefined;
       return this.then(success, failure);
     };
+  },
+  each: function (resources) {
+    return function (onSuccess, onFailure, concurrency) {
+      if (typeof onFailure === 'number') {
+        concurrency = onFailure;
+        onFailure = undefined;
+      }
+      let success = function (data) {
+        if (!Array.isArray(data)) return Promise.reject(new TypeError('ERROR: each expects input to be an array'));
+        if (typeof onSuccess !== 'function') return Promise.reject(new TypeError('ERROR: each expects onSuccess handler to be a function'));
+        return resources.Promisie.each(data, concurrency, onSuccess);
+      };
+      let failure = (typeof onFailure === 'function') ? onFailure : undefined;
+      return this.then(success, failure);
+    };
   }
 };
+
+module.exports = CHAINABLES;
