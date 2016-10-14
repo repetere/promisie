@@ -5,6 +5,7 @@ const divide = require('./divisions');
 const chainables = require('./chainables');
 const parallel_generator = require('./parallel_generator');
 const settle_generator = require('./settle_generator');
+const dowhilst_generator = require('./dowhilst_generator');
 
 var _series = function (operations, cb) {
   for (let i = 0; i < operations.length; i++) {
@@ -56,6 +57,22 @@ var _parallel = function (fns, args) {
   }
 };
 
+var _dowhilst = function (fn, evaluate, cb) {
+  try {
+    let operator = dowhilst_generator(fn, evaluate)();
+    let iterate = series_iterator(operator, cb);
+    iterate();
+  }
+  catch (e) {
+    cb(e);
+  }
+};
+
+var _iterate = function (generator, cb) {
+  let iterate = series_iterator(generator, cb);
+  iterate();
+};
+
 var safe_assign = function (data) {
   let result = {};
   for (let key in data) {
@@ -63,6 +80,12 @@ var safe_assign = function (data) {
     if (descriptor && descriptor.writable) result[key] = data[key];
   } 
   return result;
+};
+
+var isGenerator = function (val) {
+  let generator = function* () { yield true; };
+  let constructor = generator.constructor;
+  return val.constructor === generator.constructor;
 };
 
 module.exports = {
@@ -76,5 +99,8 @@ module.exports = {
   _map,
   _parallel,
   _settle,
-  safe_assign
+  safe_assign,
+  isGenerator,
+  _dowhilst,
+  _iterate
 };

@@ -593,4 +593,60 @@ describe('Promisie test', function () {
 				});
 		});
 	});
+	describe('.doWhilst static method testing', function () {
+		it('Should run an async function until evaluation passes', done => {
+			let index = 0;
+			let results = [];
+			let someasync = function () {
+				return new Promisie(resolve => {
+					setTimeout(() => {
+						results.push(index);
+						resolve(index++);
+					}, 250);
+				});
+			};
+			let evaluation = (val) => val !== 5;
+			Promisie.doWhilst(someasync, evaluation)
+				.try(() => {
+					expect(results).to.deep.equal([0, 1, 2, 3, 4, 5]);
+					done();
+				})
+				.catch(done);
+		});
+		it('Should handle an error', done => {
+			let index = 0;
+			let results = [];
+			let someasync = function () {
+				return new Promisie((resolve, reject) => {
+					setTimeout(() => {
+						results.push(index);
+						if (index === 3) reject(new Error('Test Error'));
+						else resolve(index++);
+					}, 250);
+				});
+			};
+			let evaluation = (val) => val !== 5;
+			Promisie.doWhilst(someasync, evaluation)
+				.then(() => {
+					done(new Error('Should not resolve'))
+				}, e => {
+					expect(e instanceof Error).to.be.true;
+					done();
+				});
+		});
+	});
+	describe('.iterate static method testing', function () {
+		it('Should iterate through generator and resolve with final value', done => {
+			let generator = function* (i) {
+				while (i < 5) yield i++;
+				return i;
+			};
+			Promisie.iterate(generator, 0)
+				.try(result => {
+					expect(result).to.equal(5);
+					done();
+				})
+				.catch(done);
+		});
+	});
 });

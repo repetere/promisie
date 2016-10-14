@@ -24,7 +24,9 @@
     "all",
     "spread",
     "parallel",
-    "each"
+    "each",
+    "doWhilst",
+    ""
   ],
   "author": "Jan Bialostok <janbialostok@gmail.com>",
   "repository": {

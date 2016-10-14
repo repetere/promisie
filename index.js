@@ -21,7 +21,7 @@ class Promisie extends Promise {
   /**
    * @static promisify static method
    * @param {Function} fn Async function that expects a callback
-   * @param {*} [_this=] Optional "this" that will be bound to the promisified function 
+   * @param {*} [_this] Optional "this" that will be bound to the promisified function 
    * @return {Function} Returns a promisifed function which returns a Promise
    */
 	static promisify (fn, _this) {
@@ -44,7 +44,7 @@ class Promisie extends Promise {
   /**
    * @static promisifyAll static method
    * @param {Object|*[]} mod An object or array containing functions to be promisified non-functions can be included an will be skipped
-   * @param {*} [_this=] Optional "this" that will be bound to all promisified functions
+   * @param {*} [_this] Optional "this" that will be bound to all promisified functions
    * @param {Object} [options={recursive:false,readonly:true}] Options for the execution of promisifyAll
    * @param {boolean} options.recursive If true promisifyAll will recursively promisify functions inside of child objects
    * @param {boolean} options.readonly If true promisifyAll will ensure that property is writable before trying to re-assign
@@ -86,7 +86,7 @@ class Promisie extends Promise {
     }
     /**
      * Pipe function that is returned by static method will run series when called and pass all arguments to first function in series
-     * @param {*...} Accepts any arguments
+     * @param {...*} Accepts any arguments
      * @return {Object} Returns an instance of Promisie which resolves once series finished execution
      */
     return function pipe () {
@@ -99,6 +99,13 @@ class Promisie extends Promise {
       return Promisie.promisify(UTILITY._series)(_operations);
     };
   }
+  /**
+   * @static map static method
+   * @param {*[]} datas An array of data to be used as first argument in iterator function
+   * @param {number} [concurrency] Optional concurrency limit
+   * @param {Function} fn Iterator function for map if concurrency isn't passed it fn can be passed as second argument
+   * @return {Object} Returns and instance of Promisie which resolves with an array of resolved values
+   */
   static map (datas, concurrency, fn) {
     if (typeof concurrency === 'function') {
       fn = concurrency;
@@ -107,17 +114,40 @@ class Promisie extends Promise {
     let operations = datas.map(data => fn(data));
     return Promisie.promisify(UTILITY._map)(operations, concurrency);
   }
+  /**
+   * @static each static method
+   * @param {*[]} datas An array of data to be used as first argument in iterator function
+   * @param {number} [concurrency] Optional concurrency limit
+   * @param {Function} fn Iterator function for each if concurrency isn't passed it fn can be passed as second argument
+   * @return {Object} Returns and instance of Promisie which resolves with original datas argument
+   */
   static each (datas, concurrency, fn) {
     return Promisie.map(datas, concurrency, fn)
       .then(() => datas, e => Promise.reject(e));
   }
+  /**
+   * @static parallel static method
+   * @param {Object|Function[]} fns Array of functions or object containing functions. If an object will resolve to an object with matching keys mapped to resolve values
+   * @param {*[]|*} args An array of arguments or a single argument that will be passed to each function being run in parallel
+   * @return {Object} Returns and instance of Promisie which resolves after parallel operations are complete
+   */
   static parallel (fns, args) {
     if (Array.isArray(fns)) return Promisie.all(fns);
     else return UTILITY._parallel.call(Promisie, fns, args);
   }
+  /**
+   * @static settle static method
+   * @param {Function[]|Object} fns An array of functions or object containing functions
+   * @return {Object} Returns a Promisie which resolves with an object containing a "fulfilled" and "rejected" property. Almost always resolves rejected promises will be in "rejected" array and resolved will be in "fulfilled" array
+   */
   static settle (fns) {
     return UTILITY._settle.call(Promisie, fns);
   }
+  /**
+   * @static compose static method
+   * @param {Function[] fns An array of functions that will be compiled into pipe
+   * @return {Function} Almost the exact same functionality as Promisie.pipe except fns are reversed before being compiled into pipe
+   */
   static compose (fns) {
     let operations = (Array.isArray(fns)) ? fns : [...arguments];
     for (let i = 0; i < operations.length; i++) {
@@ -126,11 +156,38 @@ class Promisie extends Promise {
     operations = operations.reverse();
     return Promisie.pipe(operations);
   }
+  /**
+   * @static all static method
+   * @param {Object[]|...Object|Object} argument An array of unresolved Promises, or an argument list comprised of unresolved Promises, or an iterable object containing unresolved Promises
+   * @return {Object} Returns and instance of Promise which resolves once all Promises have resolved
+   */
   static all () {
     let argv = [...arguments];
     if (argv.length === 1 && Array.isArray(argv[0])) return super.all(argv[0]);
     else if (argv.length === 1 && typeof argv[0][Symbol.iterator] === 'function') return super.all([...argv[0]]);
     else return super.all([...arguments]);
+  }
+  /**
+   * @static iterate static method
+   * @param {Function} generator An uninitialized generator function
+   * @param {*} initial An initial value to be passed to the generator
+   * @return {Object} Returns a Promisie which resolves once generator has yielded its last value
+   */
+  static iterate (generator, initial) {
+    let isGenerator = UTILITY.isGenerator(generator);
+    if (!isGenerator) throw new TypeError(`ERROR: iterate can only be called with generators - argument: ${ generator.constructor }`);
+    let initialized = generator(initial);
+    return Promisie.promisify(UTILITY._iterate)(initialized);
+  }
+  /**
+   * @static doWhilst static method
+   * @param {Function} fn Iterator function that will be called until evalution returns false
+   * @param {Function} evaluate An evaluation function that is run after each iteration of fn resolves. If evaluate returns true iterator will be called again
+   * @return {Object} Returns a Promisie which resolves once evaluate function return false
+   */
+  static doWhilst (fn, evaluate) {
+    if (typeof fn !== 'function' || typeof evaluate !== 'function') throw new TypeError('ERROR: whilst expects that fn and evaluate params are functions');
+    return Promisie.promisify(UTILITY._dowhilst)(fn, evaluate);
   }
 }
 
