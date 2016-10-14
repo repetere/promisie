@@ -1,7 +1,7 @@
 # Promisie
 Promisie is an extension of the ES6 native Promise class that provides helpful static methods that are seen in many other Promise libraries
 ### Version
-1.4.1
+1.4.6
 ### Installation
 Because Promisie uses native ES6 Promises, classes and spread operators you must be running Node v6.0.0 or above
 ```sh
@@ -43,6 +43,17 @@ pipe('some', 'random', 'arguments')
     .then(result => {
         //result is still the resolved value of the last function in the array with the difference being the first function will be passed the arguments of pipe()
     })
+/*
+Promisie now has many more helpful methods:
+- .map
+- .each
+- .parallel
+- .doWhilst
+- .iterate
+- .settle
+- .all
+See documentation for more details and test for usage
+*/
 ```
 ### Testing
 ```sh
@@ -53,9 +64,10 @@ $ npm test
 ```
 ### Todos
 - Add more prototype and static methods
-    - Map
-    - Each
     - Filter
+    - Reduce
+    - Queue
+    - Retry
 
 License
 ----
