@@ -1,63 +1,29 @@
 'use strict';
-var utility = require('./utility/index');
+const UTILITY = require('./utility/index');
 
-var _series = function (operations, cb) {
-  for (let i = 0; i < operations.length; i++) {
-    if (typeof operations[i] !== 'function') return cb(new TypeError(`ERROR: series can only be called with functions - argument ${i}: ${operations[i]}`));
-  }
-  let operator = utility.series_generator(operations);
-  let iterate = utility.series_iterator(operator, cb);
-  iterate();
-};
-
-var _map = function (operations, concurrency, cb) {
-  if (!Array.isArray(operations)) cb(new TypeError('ERROR: map can only be called with an Array'));
-  cb = (typeof concurrency === 'function') ? concurrency : cb;
-  let operator;
-  let iterate;
-  if (typeof concurrency !== 'number' || concurrency === 0) operator = utility.series_generator([operations]);
-  else {
-    let divisions = utility.divide(operations, concurrency);
-    operator = utility.series_generator(divisions);
-  }
-  iterate = utility.series_iterator(operator, cb);
-  iterate([]);
-};
-
-var _settle = function (fns) {
-  let fulfilled = [];
-  let rejected = [];
-  fns[Symbol.iterator] = utility.settle_generator(fns, fulfilled, rejected);
-  return this.all(fns)
-    .then(() => {
-      return { fulfilled, rejected };
-    }, e => Promise.reject(e));
-};
-
-var _parallel = function (fns, args) {
-  let result = {};
-  fns[Symbol.iterator] = utility.parallel_generator(fns, args, result);
-  return this.all(fns)
-    .then(() => result, e => Promise.reject(e));
-};
-
-
-var assignWithReadOnly = function (data) {
-  let result = {};
-  for (let key in data) {
-    let descriptor = Object.getOwnPropertyDescriptor(data, key);
-    if (descriptor && descriptor.writable) result[key] = data[key];
-  } 
-  return result;
-};
-
+/**
+ * Promisie inherits from the Promise class and adds helpful chainble methods
+ * @class Promisie
+ * @extends {Promise}
+ */
 class Promisie extends Promise {
+  /**
+   * @constructor {Function} Constructor for Promisie class
+   * @param {Object} options Passes options to Promise constructor
+   * @return {Object} Returns instance of Promisie
+   */
   constructor (options) {
     super(options);
-    for (let key in utility.chainables) {
-      this[key] = utility.chainables[key]({ Promisie });
+    for (let key in UTILITY.chainables) {
+      this[key] = UTILITY.chainables[key]({ Promisie });
     }
   }
+  /**
+   * @static promisify static method
+   * @param {Function} fn Async function that expects a callback
+   * @param {*} [_this=] Optional "this" that will be bound to the promisified function 
+   * @return {Function} Returns a promisifed function which returns a Promise
+   */
 	static promisify (fn, _this) {
 	  if (typeof fn !== 'function') throw new TypeError('ERROR: promisify must be called with a function');
 	  else {
@@ -75,11 +41,20 @@ class Promisie extends Promise {
       else return promisified;
 	  }
   }
+  /**
+   * @static promisifyAll static method
+   * @param {Object|*[]} mod An object or array containing functions to be promisified non-functions can be included an will be skipped
+   * @param {*} [_this=] Optional "this" that will be bound to all promisified functions
+   * @param {Object} [options={recursive:false,readonly:true}] Options for the execution of promisifyAll
+   * @param {boolean} options.recursive If true promisifyAll will recursively promisify functions inside of child objects
+   * @param {boolean} options.readonly If true promisifyAll will ensure that property is writable before trying to re-assign
+   * @return {Object|*[]} Returns a clone of original object or array with promisified functions
+   */
   static promisifyAll (mod, _this, options = { recursive: false, readonly: true }) {
   	if (mod && typeof mod === 'object') {
       let promisified = Object.create(mod);
       if (!options.readonly) promisified = Object.assign((promisified && typeof promisified === 'object') ? promisified : {}, mod);
-      else promisified = assignWithReadOnly(mod);
+      else promisified = UTILITY.safe_assign(mod);
 	  	Object.keys(promisified).forEach(key => {
         if (typeof promisified[key] === 'function') promisified[key + 'Async'] = (_this) ? this.promisify(promisified[key]).bind(_this) : this.promisify(promisified[key]);
         if ((typeof options === 'boolean' && options) || (options && options.recursive)) {
@@ -90,15 +65,30 @@ class Promisie extends Promise {
   	}
   	else throw new TypeError('ERROR: promisifyAll must be called with an object or array');
   }
+  /**
+   * @static series static method
+   * @param {Array|Object} fns An array or iterable object containing functions that will be run in series
+   * @return {Object} Returns an instance of Promisie which resolves after the series finishes execution
+   */
   static series (fns) {
     let operations = (Array.isArray(fns)) ? fns : [...arguments];
-    return Promisie.promisify(_series)(operations);
+    return Promisie.promisify(UTILITY._series)(operations);
   }
+  /**
+   * @static pipe static method
+   * @param {Array|Object} fns An array or iterable object containing functions that will be run in series
+   * @return {Object} Returns an function which will run Promisie.series when called
+   */
   static pipe (fns) {
     let operations = (Array.isArray(fns)) ? fns : [...arguments];
     for (let i = 0; i < operations.length; i++) {
       if (typeof operations[i] !== 'function') throw new TypeError(`ERROR: pipe can only be called with functions - argument ${i}: ${operations[i]}`);
     }
+    /**
+     * Pipe function that is returned by static method will run series when called and pass all arguments to first function in series
+     * @param {*...} Accepts any arguments
+     * @return {Object} Returns an instance of Promisie which resolves once series finished execution
+     */
     return function pipe () {
       let argv = arguments;
       let _operations = Object.assign([], operations);
@@ -106,7 +96,7 @@ class Promisie extends Promise {
       _operations[0] = function () {
         return first(...argv);
       };
-      return Promisie.promisify(_series)(_operations);
+      return Promisie.promisify(UTILITY._series)(_operations);
     };
   }
   static map (datas, concurrency, fn) {
@@ -115,7 +105,7 @@ class Promisie extends Promise {
       concurrency = undefined;
     }
     let operations = datas.map(data => fn(data));
-    return Promisie.promisify(_map)(operations, concurrency);
+    return Promisie.promisify(UTILITY._map)(operations, concurrency);
   }
   static each (datas, concurrency, fn) {
     return Promisie.map(datas, concurrency, fn)
@@ -123,10 +113,10 @@ class Promisie extends Promise {
   }
   static parallel (fns, args) {
     if (Array.isArray(fns)) return Promisie.all(fns);
-    else return _parallel.call(Promisie, fns, args);
+    else return UTILITY._parallel.call(Promisie, fns, args);
   }
   static settle (fns) {
-    return _settle.call(Promisie, fns);
+    return UTILITY._settle.call(Promisie, fns);
   }
   static compose (fns) {
     let operations = (Array.isArray(fns)) ? fns : [...arguments];

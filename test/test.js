@@ -582,5 +582,15 @@ describe('Promisie test', function () {
 					done();
 				}, done);
 		});
+		it('Should handle an error in execution of sync function', done => {
+			let asyncfns = [asyncfn(500, true), () => { throw new Error('TEST'); }];
+			Promisie.settle(asyncfns)
+				.then(val => {
+					done(new Error('Should not resolve'));
+				}, e => {
+					expect(e instanceof Error).to.be.true;
+					done();
+				});
+		});
 	});
 });
