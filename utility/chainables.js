@@ -12,7 +12,7 @@ const CHAINABLES = {
     return function (onSuccess, onFailure) {
       let { success, failure } = setHandlers(function (data) {
         try {
-          return (typeof onSuccess === 'function') ? onSuccess(data) : null;
+          return (typeof onSuccess === 'function') ? onSuccess(data) : Promise.reject(new TypeError('ERROR: try expects onSuccess handler to be a function'));
         }
         catch (e) {
           return Promise.reject(e);
@@ -66,6 +66,19 @@ const CHAINABLES = {
         if (typeof onSuccess !== 'function') return Promise.reject(new TypeError('ERROR: settle expects onSuccess handler to be a function'));
         let operations = data.map(d => () => onSuccess(d));
         return resources.Promisie.settle(operations);
+      }, onFailure);
+      return this.then(success, failure);
+    };
+  },
+  retry: function (resources) {
+    return function (onSuccess, onFailure, options) {
+      if (typeof onFailure === 'object') {
+        options = onFailure;
+        onFailure = undefined;
+      }
+      let { success, failure } = setHandlers(function (data) {
+        if (typeof onSuccess !== 'function') return Promise.reject(new TypeError('ERROR: retry expects onSuccess handler to be a function'));
+        return resources.Promisie.retry(onSuccess, options);
       }, onFailure);
       return this.then(success, failure);
     };

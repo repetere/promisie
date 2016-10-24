@@ -649,4 +649,33 @@ describe('Promisie test', function () {
 				.catch(done);
 		});
 	});
+	describe('.retry method testing', function () {
+		it('Should retry until it resolves or hits retry limit', done => {
+			let index = 0;
+			let retryfn = function () {
+				if (2 > index++) return Promise.reject(new Error('Test Error'));
+				return Promise.resolve('hello world');
+			};
+			Promisie.retry(retryfn)
+				.try(val => {
+					expect(val === 'hello world').to.be.true;
+					done();
+				})
+				.catch(done);
+		});
+		it('Should retry until it rejects at retry limit', done => {
+			let index = 0;
+			let retryfn = function () {
+				if (2 > index++) return Promise.reject(new Error('Test Error'));
+				return Promise.resolve('hello world');
+			};
+			Promisie.retry(retryfn, { times: 2, timeout: 200 })
+				.then(() => {
+					done(new Error('Should not resolve'));
+				}, e => {
+					expect(e.message).to.equal('Test Error');
+					done();
+				});
+		});
+	});
 });

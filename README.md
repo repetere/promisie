@@ -1,7 +1,7 @@
 # Promisie
 Promisie is an extension of the ES6 native Promise class that provides helpful static methods that are seen in many other Promise libraries
 ### Version
-1.4.6
+1.4.7
 ### Installation
 Because Promisie uses native ES6 Promises, classes and spread operators you must be running Node v6.0.0 or above
 ```sh
@@ -52,6 +52,7 @@ Promisie now has many more helpful methods:
 - .iterate
 - .settle
 - .all
+- .retry
 See documentation for more details and test for usage
 */
 ```
@@ -67,7 +68,6 @@ $ npm test
     - Filter
     - Reduce
     - Queue
-    - Retry
 
 License
 ----

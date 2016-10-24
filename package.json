@@ -1,6 +1,6 @@
 {
   "name": "promisie",
-  "version": "1.4.6",
+  "version": "1.4.7",
   "description": "helpful add-on functionality for es6 Promises",
   "main": "index.js",
   "scripts": {
@@ -26,7 +26,8 @@
     "parallel",
     "each",
     "dowhilst",
-    "iterate"
+    "iterate",
+    "retry"
   ],
   "author": "Jan Bialostok <janbialostok@gmail.com>",
   "repository": {

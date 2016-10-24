@@ -186,8 +186,24 @@ class Promisie extends Promise {
    * @return {Object} Returns a Promisie which resolves once evaluate function return false
    */
   static doWhilst (fn, evaluate) {
-    if (typeof fn !== 'function' || typeof evaluate !== 'function') throw new TypeError('ERROR: whilst expects that fn and evaluate params are functions');
+    if (typeof fn !== 'function' || typeof evaluate !== 'function') throw new TypeError('ERROR: doWhilst expects that fn and evaluate params are functions');
     return Promisie.promisify(UTILITY._dowhilst)(fn, evaluate);
+  }
+  /**
+   * @static retry static method
+   * @param {Function} fn Function that will be called by retry until retry limit is reached or resolves
+   * @param {Object} [options={times:3,timeout:0}] Configurable options for retry
+   * @param {number} options.times Times to retry function before rejecting on error defaults to 3
+   * @param {number} options.timeout Timeout between each retry in ms defaults to 0
+   * @return {Object} Returns a Promisie which resolves once function successfully resolves or rejects at retry limit
+   */
+  static retry (fn, options = { times: 3, timeout: 0 }) {
+    if (typeof fn !== 'function') throw new TypeError('ERROR: retry expects that fn is a function');
+    return Promisie.promisify(UTILITY._retry, Promisie)(fn, options)
+      .then(val => {
+        if (val.__isRejected) return Promise.reject(val.e);
+        return val;
+      }, e => Promise.reject(e));
   }
 }
 

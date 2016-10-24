@@ -6,6 +6,7 @@ const chainables = require('./chainables');
 const parallel_generator = require('./parallel_generator');
 const settle_generator = require('./settle_generator');
 const dowhilst_generator = require('./dowhilst_generator');
+const retry_generator = require('./retry_generator');
 
 var _series = function (operations, cb) {
   for (let i = 0; i < operations.length; i++) {
@@ -21,13 +22,16 @@ var _map = function (operations, concurrency, cb) {
   cb = (typeof concurrency === 'function') ? concurrency : cb;
   let operator;
   let iterate;
-  if (typeof concurrency !== 'number' || concurrency === 0) operator = series_generator([operations]);
+  if (!operations.length) return [];
   else {
-    let divisions = divide(operations, concurrency);
-    operator = series_generator(divisions);
+    if (typeof concurrency !== 'number' || concurrency === 0) operator = series_generator([operations]);
+    else {
+      let divisions = divide(operations, concurrency);
+      operator = series_generator(divisions);
+    }
+    iterate = series_iterator(operator, cb);
+    iterate([]);
   }
-  iterate = series_iterator(operator, cb);
-  iterate([]);
 };
 
 var _settle = function (fns) {
@@ -73,6 +77,17 @@ var _iterate = function (generator, cb) {
   iterate();
 };
 
+var _retry = function (fn, options, cb) {
+  try {
+    let operator = retry_generator(fn, options).call(this);
+    let iterate = series_iterator(operator, cb);
+    iterate();
+  }
+  catch (e) {
+    cb(e);
+  }
+};
+
 var safe_assign = function (data) {
   let result = {};
   for (let key in data) {
@@ -102,5 +117,6 @@ module.exports = {
   safe_assign,
   isGenerator,
   _dowhilst,
-  _iterate
+  _iterate,
+  _retry
 };
