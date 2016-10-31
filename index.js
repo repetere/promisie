@@ -111,7 +111,9 @@ class Promisie extends Promise {
       fn = concurrency;
       concurrency = undefined;
     }
-    let operations = datas.map(data => fn(data));
+    let operations = datas.map(data => {
+      return () => fn(data);
+    });
     return Promisie.promisify(UTILITY._map)(operations, concurrency);
   }
   /**
