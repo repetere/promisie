@@ -79,7 +79,7 @@ var _iterate = function (generator, cb) {
 
 var _retry = function (fn, options, cb) {
   try {
-    let operator = retry_generator(fn, options).call(this);
+    let operator = retry_generator.call(this, fn, options)();
     let iterate = series_iterator(operator, cb);
     iterate();
   }
