@@ -22,8 +22,8 @@ module.exports = function (fn, options) {
           .then(fn)
           .catch(e => Promise.reject(e));
       })();
+      isFirst = false;
       if (invoked && typeof invoked.then === 'function' && typeof invoked.catch === 'function') {
-        isFirst = false;
         yield invoked
           .then(result => {
             current = result;
