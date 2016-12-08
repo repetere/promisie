@@ -663,6 +663,22 @@ describe('Promisie test', function () {
 				})
 				.catch(done);
 		});
+		it('Should retry until it resolves or hits retry limit and respect timeout', done => {
+			let index = 0;
+			let retryfn = function () {
+				if (2 > index++) return Promise.reject(new Error('Test Error'));
+				return Promise.resolve('hello world');
+			};
+			let start = new Date();
+			Promisie.retry(retryfn, { times: 3, timeout: 750 })
+				.try(val => {
+					let end = new Date();
+					expect(end.getTime() - start.getTime()).to.be.above(1500);
+					expect(val === 'hello world').to.be.true;
+					done();
+				})
+				.catch(done);
+		});
 		it('Should retry until it rejects at retry limit', done => {
 			let index = 0;
 			let retryfn = function () {
