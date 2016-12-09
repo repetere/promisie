@@ -2,7 +2,7 @@
 
 module.exports = function (fn, evaluate) {
   let current;
-  return function* () {
+  return function* doWhilst () {
     do {
       let invoked = fn();
       if (invoked && typeof invoked.then === 'function' && typeof invoked.catch === 'function') {

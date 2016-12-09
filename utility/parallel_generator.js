@@ -3,7 +3,7 @@
 module.exports = function (fns, args, result = {}) {
   let index = 0;
   let keys = Object.keys(fns);
-  return function* () {
+  return function* parallel () {
     while (index < keys.length) {
       let currentIndex = index++;
       if (typeof fns[keys[currentIndex]] !== 'function') {

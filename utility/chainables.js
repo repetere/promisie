@@ -9,7 +9,7 @@ var setHandlers = function (success, failure) {
 
 const CHAINABLES = {
   try: function (resources) {
-    return function (onSuccess, onFailure) {
+    return function _try (onSuccess, onFailure) {
       let { success, failure } = setHandlers(function (data) {
         try {
           return (typeof onSuccess === 'function') ? onSuccess(data) : Promise.reject(new TypeError('ERROR: try expects onSuccess handler to be a function'));
@@ -22,7 +22,7 @@ const CHAINABLES = {
     };
   },
   spread: function (resources) {
-    return function (onSuccess, onFailure) {
+    return function _spread (onSuccess, onFailure) {
       let { success, failure } = setHandlers(function (data) {
         if (typeof data[Symbol.iterator] !== 'function') return Promise.reject(new TypeError('ERROR: spread expects input to be iterable'));
         if (typeof onSuccess !== 'function') return Promise.reject(new TypeError('ERROR: spread expects onSuccess handler to be a function'));
@@ -32,7 +32,7 @@ const CHAINABLES = {
     };
   },
   map: function (resources) {
-    return function (onSuccess, onFailure, concurrency) {
+    return function _map (onSuccess, onFailure, concurrency) {
       if (typeof onFailure === 'number') {
         concurrency = onFailure;
         onFailure = undefined;
@@ -46,7 +46,7 @@ const CHAINABLES = {
     };
   },
   each: function (resources) {
-    return function (onSuccess, onFailure, concurrency) {
+    return function _each (onSuccess, onFailure, concurrency) {
       if (typeof onFailure === 'number') {
         concurrency = onFailure;
         onFailure = undefined;
@@ -60,7 +60,7 @@ const CHAINABLES = {
     };
   },
   settle: function (resources) {
-    return function (onSuccess, onFailure) {
+    return function _settle (onSuccess, onFailure) {
       let { success, failure } = setHandlers(function (data) {
         if (!Array.isArray(data)) return Promise.reject(new TypeError('ERROR: settle expects input to be an array'));
         if (typeof onSuccess !== 'function') return Promise.reject(new TypeError('ERROR: settle expects onSuccess handler to be a function'));
@@ -71,7 +71,7 @@ const CHAINABLES = {
     };
   },
   retry: function (resources) {
-    return function (onSuccess, onFailure, options) {
+    return function _retry (onSuccess, onFailure, options) {
       if (typeof onFailure === 'object') {
         options = onFailure;
         onFailure = undefined;

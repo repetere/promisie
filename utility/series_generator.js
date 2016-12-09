@@ -8,7 +8,7 @@ var handleMap = function (arr, state) {
   });
 };
 
-module.exports = function* (fns) {
+module.exports = function* series (fns) {
   let current;
   let state;
   while (fns.length) {
