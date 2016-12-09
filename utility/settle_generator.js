@@ -2,7 +2,7 @@
 
 module.exports = function (fns, fulfilled = [], rejected = []) {
   let index = 0;
-  return function* () {
+  return function* settle () {
     while (index < fns.length) {
       let currentIndex = index++;
       if (typeof fns[currentIndex] !== 'function') {

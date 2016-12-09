@@ -14,7 +14,7 @@ module.exports = function (fn, options) {
   let current;
   let isFirst = true;
   let { times, timeout } = options;
-  return function* () {
+  return function* retry () {
     do {
       times--;
       let invoked = (isFirst || typeof timeout !== 'number' || timeout === 0) ? fn() : (() => {
