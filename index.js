@@ -72,7 +72,17 @@ class Promisie extends Promise {
    */
   static series (fns) {
     let operations = (Array.isArray(fns)) ? fns : [...arguments];
-    return Promisie.promisify(UTILITY._series)(operations);
+    let handlesSyncErrors = (process && process.version && process.version.node) ? (Number(process.version.node.split('.')[0]) > 6) : false;
+    return Promisie.promisify(UTILITY._series)((handlesSyncErrors) ? operations : operations.map(operation => {
+      return function () {
+        try {
+          return operation(...arguments);
+        }
+        catch (e) {
+          return Promise.reject(e);
+        }
+      };
+    }));
   }
   /**
    * @static pipe static method

@@ -261,7 +261,7 @@ describe('Promisie test', function () {
 					done();
 				});
 		});
-		it('Should handle an error in one of the functions in the series', done => {
+		it('Should handle an error in one of the functions in the series if all functions are async', done => {
 			let asyncfns = [1, 2, 3, 4, 5].map(i => {
 				return function (val) {
 					return new Promise((resolve, reject) => {
@@ -273,6 +273,21 @@ describe('Promisie test', function () {
 				};
 			});
 			Promisie.series(asyncfns)
+				.then(() => {
+					done(new Error('Should have rejected with an error'));
+				}, e => {
+					expect(e).to.equal(3);
+					done();
+				});
+		});
+		it('Should handle an error in one of the functions in the series if all functions are sync', done => {
+			let syncfns = [1, 2, 3, 4, 5].map(i => {
+				return function (val) {
+					if (i === 3) throw i;
+					else return i + (val || 0);
+				};
+			});
+			Promisie.series(syncfns)
 				.then(() => {
 					done(new Error('Should have rejected with an error'));
 				}, e => {
