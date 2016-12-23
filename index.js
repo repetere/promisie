@@ -79,7 +79,7 @@ class Promisie extends Promise {
           return operation(...arguments);
         }
         catch (e) {
-          return Promise.reject(e);
+          return Promisie.reject(e);
         }
       };
     }));
@@ -135,7 +135,7 @@ class Promisie extends Promise {
    */
   static each (datas, concurrency, fn) {
     return Promisie.map(datas, concurrency, fn)
-      .then(() => datas, e => Promise.reject(e));
+      .then(() => datas, e => Promisie.reject(e));
   }
   /**
    * @static parallel static method
@@ -213,9 +213,9 @@ class Promisie extends Promise {
     if (typeof fn !== 'function') throw new TypeError('ERROR: retry expects that fn is a function');
     return Promisie.promisify(UTILITY._retry, Promisie)(fn, options)
       .then(val => {
-        if (val.__isRejected) return Promise.reject(val.e);
+        if (val.__isRejected) return Promisie.reject(val.e);
         return val;
-      }, e => Promise.reject(e));
+      }, e => Promisie.reject(e));
   }
 }
 

@@ -42,10 +42,10 @@ var _settle = function (fns) {
     return this.all(fns)
       .then(() => {
         return { fulfilled, rejected };
-      }, e => Promise.reject(e));
+      }, e => this.reject(e));
   }
   catch (e) {
-    return Promise.reject(e);
+    return this.reject(e);
   }
 };
 
@@ -54,10 +54,10 @@ var _parallel = function (fns, args) {
     let result = {};
     fns[Symbol.iterator] = parallel_generator(fns, args, result);
     return this.all(fns)
-      .then(() => result, e => Promise.reject(e));
+      .then(() => result, e => this.reject(e));
   }
   catch (e) {
-    return Promise.reject(e);
+    return this.reject(e);
   }
 };
 
