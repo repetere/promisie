@@ -565,6 +565,32 @@ describe('Promisie test', function () {
 				})
 				.catch(done);
 		});
+		it('Should handle sync functions', done => {
+			let operations = {
+				'hello': asyncfn(250, 'world'),
+				'foo': asyncfn(500, 'bar'),
+				'fizz': () => 'boom'
+			};
+			Promisie.parallel(operations)
+				.try(result => {
+					expect(result).to.deep.equal({ hello: 'world', 'foo': 'bar', fizz: 'boom' });
+					done();
+				})
+				.catch(done);
+		});
+		it('Should handle non-function values', done => {
+			let operations = {
+				'hello': asyncfn(250, 'world'),
+				'foo': asyncfn(500, 'bar'),
+				'fizz': 'boom'
+			};
+			Promisie.parallel(operations)
+				.try(result => {
+					expect(result).to.deep.equal({ hello: 'world', 'foo': 'bar', fizz: 'boom' });
+					done();
+				})
+				.catch(done);
+		});
 		it('Should handle rejections', done => {
 			let operations = {
 				'hello': asyncfn(250, 'world'),
@@ -597,6 +623,40 @@ describe('Promisie test', function () {
 					done();
 				}, done);
 		});
+		it('Should handle sync functions', done => {
+			let asyncfns = [asyncfn(500, true), function () {
+				return new Promise((resolve, reject) => {
+					setTimeout(function () {
+						reject(new Error('There was an error'));
+					}, 250);
+				});
+			}, () => true];
+			Promisie.settle(asyncfns)
+				.try(result => {
+					expect(result.fulfilled).to.be.an('array');
+					expect(result.rejected).to.be.an('array');
+					expect(result.rejected.length).to.equal(1);
+					expect(result.fulfilled.length).to.equal(2);
+					done();
+				}, done);
+		});
+		it('Should handle non-function values', done => {
+			let asyncfns = [asyncfn(500, true), function () {
+				return new Promise((resolve, reject) => {
+					setTimeout(function () {
+						reject(new Error('There was an error'));
+					}, 250);
+				});
+			}, true];
+			Promisie.settle(asyncfns)
+				.try(result => {
+					expect(result.fulfilled).to.be.an('array');
+					expect(result.rejected).to.be.an('array');
+					expect(result.rejected.length).to.equal(1);
+					expect(result.fulfilled.length).to.equal(2);
+					done();
+				}, done);
+		});
 		it('Should handle an error in execution of sync function', done => {
 			let asyncfns = [asyncfn(500, true), () => { throw new Error('TEST'); }];
 			Promisie.settle(asyncfns)
@@ -619,6 +679,31 @@ describe('Promisie test', function () {
 						resolve(index++);
 					}, 250);
 				});
+			};
+			let evaluation = (val) => val !== 5;
+			Promisie.doWhilst(someasync, evaluation)
+				.try(() => {
+					expect(results).to.deep.equal([0, 1, 2, 3, 4, 5]);
+					done();
+				})
+				.catch(done);
+		});
+		it('Should be able to handle sync functions', done => {
+			let index = 0;
+			let results = [];
+			let someasync = function () {
+				if (index === 3) {
+					results.push(index++);
+					return index;
+				}
+				else {
+					return new Promisie(resolve => {
+						setTimeout(() => {
+							results.push(index);
+							resolve(index++);
+						}, 250);
+					});
+				}
 			};
 			let evaluation = (val) => val !== 5;
 			Promisie.doWhilst(someasync, evaluation)
@@ -705,6 +790,32 @@ describe('Promisie test', function () {
 					done(new Error('Should not resolve'));
 				}, e => {
 					expect(e.message).to.equal('Test Error');
+					done();
+				});
+		});
+		it('Should handle sync functions', done => {
+			let index = 0;
+			let retryfn = function () {
+				if (2 > index++) return Promise.reject(new Error('Test Error'));
+				return 'hello world';
+			};
+			Promisie.retry(retryfn)
+				.try(val => {
+					expect(val === 'hello world').to.be.true;
+					done();
+				})
+				.catch(done);
+		});
+		it('Should handle an error in retry generator', done => {
+			let retryfn = function () {
+				if (2 > index++) return Promise.reject(new Error('Test Error'));
+				return Promise.resolve('hello world');
+			};
+			Promisie.retry(retryfn)
+				.then(() => {
+					done(new Error('Should not resolve'));
+				}, e => {
+					expect(e instanceof Error).to.be.true;
 					done();
 				});
 		});
