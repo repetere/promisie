@@ -27,7 +27,8 @@
     "each",
     "dowhilst",
     "iterate",
-    "retry"
+    "retry",
+    "finally"
   ],
   "author": "Jan Bialostok <janbialostok@gmail.com>",
   "repository": {
@@ -53,6 +54,7 @@
     "istanbul": "^0.4.5",
     "jsdoc": "^3.4.3",
     "mocha": "^2.4.4",
-    "mocha-lcov-reporter": "^1.2.0"
+    "mocha-lcov-reporter": "^1.2.0",
+    "moment": "^2.17.1"
   }
 }

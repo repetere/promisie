@@ -1,11 +1,12 @@
 'use strict';
 
 require('mocha');
-var path = require('path'),
-	chai = require('chai'),
-	fs = require('fs'),
-	expect = chai.expect,
-	Promisie = require(path.resolve(__dirname, '../index'));
+const path = require('path');
+const chai = require('chai');
+const fs = require('fs');
+const expect = chai.expect;
+const Promisie = require(path.resolve(__dirname, '../index'));
+const moment = require('moment');
 
 var asyncfn = function (time, val) {
 	return function () {
@@ -446,6 +447,21 @@ describe('Promisie test', function () {
 					done();
 				}, done);
 		});
+		it('Should be able to handle concurrency when using chainable method', done => {
+			let mapfn = asyncfn(250, [1, 2, 3, 4, 5]);
+			let startTime = moment();
+			mapfn()
+				.map(function (data) {
+					return asyncfn(250, data + 1)();
+				}, 2)
+				.try(result => {
+					let diff = moment().diff(startTime);
+					expect(result).to.deep.equal([2, 3, 4, 5, 6]);
+					expect(diff > 500).to.be.true;
+					done();
+				})
+				.catch(done);
+		});
 	});
 	describe('.each method testing', function () {
 		this.timeout(15000);
@@ -506,6 +522,21 @@ describe('Promisie test', function () {
 					expect(result).to.deep.equal([1, 2, 3]);
 					done();
 				}, done);
+		});
+		it('Should be able to handle concurrency when using chainable method', done => {
+			let eachfn = asyncfn(250, [1, 2, 3, 4, 5]);
+			let startTime = moment();
+			eachfn()
+				.each(function (data) {
+					return asyncfn(250, data + 1)();
+				}, 2)
+				.try(result => {
+					let diff = moment().diff(startTime);
+					expect(result).to.deep.equal([1, 2, 3, 4, 5]);
+					expect(diff > 500).to.be.true;
+					done();
+				})
+				.catch(done);
 		});
 	});
 	describe('.spread method testing', function () {
@@ -667,6 +698,22 @@ describe('Promisie test', function () {
 					done();
 				});
 		});
+		it('Should be a chainable method', done => {
+			let i = 0;
+			Promisie.resolve([1, 2, 3, 4, 5])
+				.settle(function () {
+					if (++i % 2 === 0) return asyncfn(250, true);
+					else return Promisie.reject(new Error('TEST'));
+				})
+				.try(result => {
+					expect(result.fulfilled).to.be.an('array');
+					expect(result.rejected).to.be.an('array');
+					expect(result.rejected.length).to.equal(3);
+					expect(result.fulfilled.length).to.equal(2);
+					done();
+				})
+				.catch(done);
+		});
 	});
 	describe('.doWhilst static method testing', function () {
 		it('Should run an async function until evaluation passes', done => {
@@ -749,6 +796,30 @@ describe('Promisie test', function () {
 				.catch(done);
 		});
 	});
+	describe('.finally method testing', function () {
+		it('Should execute on reject in previous case', done => {
+			let startTime = moment();
+			asyncfn(250, true)()
+				.then(() => asyncfn(250, true)())
+				.then(() => Promisie.reject(new Error('TEST')))
+				.then(() => asyncfn(250, true)())
+				.finally(() => {
+					expect(moment().diff(startTime) < 700).to.be.true;
+					done();
+				});
+		});
+		it('Should reject with an error if argument is not a function', done => {
+			asyncfn(250, true)()
+				.then(() => asyncfn(250, true)())
+				.then(() => Promisie.reject(new Error('TEST')))
+				.then(() => asyncfn(250, true)())
+				.finally(null)
+				.catch(e => {
+					expect(e instanceof Error).to.be.true;
+					done();
+				});
+		});
+	});
 	describe('.retry method testing', function () {
 		it('Should retry until it resolves or hits retry limit', done => {
 			let index = 0;
@@ -816,6 +887,35 @@ describe('Promisie test', function () {
 					done(new Error('Should not resolve'));
 				}, e => {
 					expect(e instanceof Error).to.be.true;
+					done();
+				});
+		});
+		it('Should be a chainable method', done => {
+			let index = 0;
+			let retryfn = function () {
+				if (2 > index++) return Promise.reject(new Error('Test Error'));
+				return Promise.resolve('hello world');
+			};
+			Promisie.resolve()
+				.retry(retryfn)
+				.try(val => {
+					expect(val === 'hello world').to.be.true;
+					done();
+				})
+				.catch(done);
+		});
+		it('Should retry until it rejects at retry limit as a chainable', done => {
+			let index = 0;
+			let retryfn = function () {
+				if (2 > index++) return Promise.reject(new Error('Test Error'));
+				return Promise.resolve('hello world');
+			};
+			Promisie.resolve()
+				.retry(retryfn, { times: 2, timeout: 200 })
+				.then(() => {
+					done(new Error('Should not resolve'));
+				}, e => {
+					expect(e.message).to.equal('Test Error');
 					done();
 				});
 		});

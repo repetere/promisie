@@ -78,9 +78,17 @@ const CHAINABLES = {
       }
       let { success, failure } = setHandlers(function (data) {
         if (typeof onSuccess !== 'function') return resources.Promisie.reject(new TypeError('ERROR: retry expects onSuccess handler to be a function'));
-        return resources.Promisie.retry(onSuccess, options);
+        return resources.Promisie.retry(() => {
+          return onSuccess(data);
+        }, options);
       }, onFailure);
       return this.then(success, failure);
+    };
+  },
+  finally: function (resources) {
+    return function _finally (handler) {
+      let _handler = () => (typeof handler === 'function') ? handler() : resources.Promisie.reject(new TypeError('ERROR: finally expects handler to be a function'));
+      return this.then(_handler, _handler);
     };
   }
 };
