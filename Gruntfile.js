@@ -48,6 +48,7 @@ module.exports = function (grunt) {
         // an error, to prevent CI builds from failing unnecessarily (e.g. if
         // coveralls.io is down). Optional, defaults to false.
         force: false,
+        excludes: ['**/bin/**']
       },
 
       all: {
@@ -83,7 +84,7 @@ module.exports = function (grunt) {
       dist: {
         files: [{
           expand: true,
-          cwd: process.cwd(),
+          cwd: __dirname,
           src: ['./index.js'],
           dest: 'bin'
         }],
@@ -93,7 +94,7 @@ module.exports = function (grunt) {
               presets: ["es2015"]
             }]
           ]
-        },
+        }
       }
     }
   });
