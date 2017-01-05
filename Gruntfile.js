@@ -79,6 +79,23 @@ module.exports = function (grunt) {
         },
       },
     },
+    browserify: {
+      dist: {
+        files: [{
+          expand: true,
+          cwd: process.cwd(),
+          src: ['./index.js'],
+          dest: 'bin'
+        }],
+        options: {
+          transform: [
+            ["babelify", {
+              presets: ["es2015"]
+            }]
+          ]
+        },
+      }
+    }
   });
 
   // Loading dependencies

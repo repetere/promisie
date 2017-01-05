@@ -1,6 +1,6 @@
 'use strict';
 const UTILITY = require('./utility/index');
-
+const CHAINABLES = UTILITY.chainables;
 /**
  * Promisie inherits from the Promise class and adds helpful chainble methods
  * @class Promisie
@@ -14,8 +14,8 @@ class Promisie extends Promise {
    */
   constructor (options) {
     super(options);
-    for (let key in UTILITY.chainables) {
-      this[key] = UTILITY.chainables[key]({ Promisie });
+    for (let key in CHAINABLES) {
+      this[key] = CHAINABLES[key]({ Promisie: Promisie });
     }
   }
   /**
