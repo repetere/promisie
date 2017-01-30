@@ -1,6 +1,6 @@
 'use strict';
 const UTILITY = require('./utility/index');
-
+const CHAINABLES = UTILITY.chainables;
 /**
  * Promisie inherits from the Promise class and adds helpful chainble methods
  * @class Promisie
@@ -14,8 +14,8 @@ class Promisie extends Promise {
    */
   constructor (options) {
     super(options);
-    for (let key in UTILITY.chainables) {
-      this[key] = UTILITY.chainables[key]({ Promisie });
+    for (let key in CHAINABLES) {
+      this[key] = CHAINABLES[key]({ Promisie: Promisie });
     }
   }
   /**
@@ -72,7 +72,17 @@ class Promisie extends Promise {
    */
   static series (fns) {
     let operations = (Array.isArray(fns)) ? fns : [...arguments];
-    return Promisie.promisify(UTILITY._series)(operations);
+    let handlesSyncErrors = (process && process.version && process.version.node) ? (Number(process.version.node.split('.')[0]) > 6) : false;
+    return Promisie.promisify(UTILITY._series)((handlesSyncErrors) ? operations : operations.map(operation => {
+      return function () {
+        try {
+          return operation(...arguments);
+        }
+        catch (e) {
+          return Promisie.reject(e);
+        }
+      };
+    }));
   }
   /**
    * @static pipe static method
@@ -125,7 +135,7 @@ class Promisie extends Promise {
    */
   static each (datas, concurrency, fn) {
     return Promisie.map(datas, concurrency, fn)
-      .then(() => datas, e => Promise.reject(e));
+      .then(() => datas, e => Promisie.reject(e));
   }
   /**
    * @static parallel static method
@@ -203,9 +213,9 @@ class Promisie extends Promise {
     if (typeof fn !== 'function') throw new TypeError('ERROR: retry expects that fn is a function');
     return Promisie.promisify(UTILITY._retry, Promisie)(fn, options)
       .then(val => {
-        if (val.__isRejected) return Promise.reject(val.e);
+        if (val.__isRejected) return Promisie.reject(val.e);
         return val;
-      }, e => Promise.reject(e));
+      }, e => Promisie.reject(e));
   }
 }
 

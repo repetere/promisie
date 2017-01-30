@@ -48,6 +48,7 @@ module.exports = function (grunt) {
         // an error, to prevent CI builds from failing unnecessarily (e.g. if
         // coveralls.io is down). Optional, defaults to false.
         force: false,
+        excludes: ['**/bin/**']
       },
 
       all: {
@@ -79,6 +80,23 @@ module.exports = function (grunt) {
         },
       },
     },
+    browserify: {
+      dist: {
+        files: [{
+          expand: true,
+          cwd: __dirname,
+          src: ['./index.js'],
+          dest: 'bin'
+        }],
+        options: {
+          transform: [
+            ["babelify", {
+              presets: ["es2015"]
+            }]
+          ]
+        }
+      }
+    }
   });
 
   // Loading dependencies
