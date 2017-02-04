@@ -144,8 +144,7 @@ class Promisie extends Promise {
    * @return {Object} Returns and instance of Promisie which resolves after parallel operations are complete
    */
   static parallel (fns, args) {
-    if (Array.isArray(fns)) return Promisie.all(fns);
-    else return UTILITY._parallel.call(Promisie, fns, args);
+    return UTILITY._parallel.call(Promisie, fns, args);
   }
   /**
    * @static settle static method

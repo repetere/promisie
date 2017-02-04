@@ -41,7 +41,10 @@ var _settle = function (fns) {
     fns[Symbol.iterator] = settle_generator(fns, fulfilled, rejected);
     return this.all(fns)
       .then(() => {
-        return { fulfilled, rejected };
+        return { 
+          fulfilled: (fulfilled.length < 1) ? fulfilled : fulfilled.sort((a, b) => a.index - b.index), 
+          rejected: (rejected.length < 1) ? rejected : rejected.sort((a, b) => a.index - b.index)
+        };
       }, e => this.reject(e));
   }
   catch (e) {
@@ -51,7 +54,7 @@ var _settle = function (fns) {
 
 var _parallel = function (fns, args) {
   try {
-    let result = {};
+    let result = Array.isArray(fns) ? [] : {};
     fns[Symbol.iterator] = parallel_generator(fns, args, result);
     return this.all(fns)
       .then(() => result, e => this.reject(e));

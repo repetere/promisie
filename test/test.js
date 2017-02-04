@@ -622,6 +622,16 @@ describe('Promisie test', function () {
 				})
 				.catch(done);
 		});
+		it('Should handle arrays', done => {
+			let operations = [asyncfn(250, 'world'), asyncfn(500, 'bar')];
+			Promisie.parallel(operations)
+				.try(result => {
+					expect(result).to.be.an('array');
+					expect(result).to.deep.equal(['world', 'bar']);
+					done();
+				})
+				.catch(done);
+		});
 		it('Should handle rejections', done => {
 			let operations = {
 				'hello': asyncfn(250, 'world'),
@@ -688,6 +698,16 @@ describe('Promisie test', function () {
 					done();
 				}, done);
 		});
+		it('Should respect the order argument array', done => {
+			let asyncfns = [asyncfn(500, true), asyncfn(250, false)];
+			Promisie.settle(asyncfns)
+				.then(val => {
+					expect(val.fulfilled.length).to.equal(2);
+					expect(val.fulfilled.map(val => val.value)).to.deep.equal([true, false]);
+					done();
+				})
+				.catch(done);
+		})
 		it('Should handle an error in execution of sync function', done => {
 			let asyncfns = [asyncfn(500, true), () => { throw new Error('TEST'); }];
 			Promisie.settle(asyncfns)
