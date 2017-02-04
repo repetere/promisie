@@ -632,6 +632,35 @@ describe('Promisie test', function () {
 				})
 				.catch(done);
 		});
+		it('Should handle child objects if recursive options is set to true', done => {
+			let operations = {
+				foo: {
+					bar: asyncfn(250, 'foobar')
+				},
+				hello: {
+					world: {
+						hi: asyncfn(250, 'helloworld')
+					}
+				},
+				standard: asyncfn(500, 'operation')
+			};
+			Promisie.parallel(operations, null, { recursive: true })
+				.try(result => {
+					expect(result).to.deep.equal({
+						foo: {
+							bar: 'foobar'
+						},
+						hello: {
+							world: {
+								hi: 'helloworld'
+							}
+						},
+						standard: 'operation'
+					});
+					done();
+				})
+				.catch(done);
+		});
 		it('Should handle rejections', done => {
 			let operations = {
 				'hello': asyncfn(250, 'world'),

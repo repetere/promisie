@@ -141,9 +141,12 @@ class Promisie extends Promise {
    * @static parallel static method
    * @param {Object|Function[]} fns Array of functions or object containing functions. If an object will resolve to an object with matching keys mapped to resolve values
    * @param {*} args An array of arguments or a single argument that will be passed to each function being run in parallel
+   * @param {Object} [options={recursive: false}] Options for the execution of parallel
+   * @param {boolean} [options.recursive=false] If true parallel will resolve nested objects
    * @return {Object} Returns and instance of Promisie which resolves after parallel operations are complete
    */
-  static parallel (fns, args) {
+  static parallel (fns, args, options = { recursive: false }) {
+    if (options.recursive === true) fns = UTILITY._handleRecursiveParallel.call(Promisie, fns);
     return UTILITY._parallel.call(Promisie, fns, args);
   }
   /**

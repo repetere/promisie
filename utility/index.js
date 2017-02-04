@@ -106,6 +106,14 @@ var isGenerator = function (val) {
   return val.constructor === generator.constructor;
 };
 
+var _handleRecursiveParallel = function (fns) {
+  return Object.keys(fns).reduce((result, key) => {
+    if (fns[key] && typeof fns[key] === 'object') result[key] = this.parallel.bind(this, _handleRecursiveParallel.call(this, fns[key]));
+    else result[key] = fns[key];
+    return result;
+  }, (Array.isArray(fns)) ? [] : {});
+};
+
 module.exports = {
   series_generator,
   series_iterator,
@@ -121,5 +129,6 @@ module.exports = {
   isGenerator,
   _dowhilst,
   _iterate,
-  _retry
+  _retry,
+  _handleRecursiveParallel
 };
