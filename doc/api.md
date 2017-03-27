@@ -21,7 +21,7 @@
     * [.pipe(fns)](#Promisie.pipe) ⇒ <code>Object</code>
     * [.map(datas, [concurrency], fn)](#Promisie.map) ⇒ <code>Object</code>
     * [.each(datas, [concurrency], fn)](#Promisie.each) ⇒ <code>Object</code>
-    * [.parallel(fns, args)](#Promisie.parallel) ⇒ <code>Object</code>
+    * [.parallel(fns, args, [options])](#Promisie.parallel) ⇒ <code>Object</code>
     * [.settle(fns)](#Promisie.settle) ⇒ <code>Object</code>
     * [.compose({Function[)](#Promisie.compose) ⇒ <code>function</code>
     * [.all(argument)](#Promisie.all) ⇒ <code>Object</code>
@@ -105,14 +105,16 @@ Promisie inherits from the Promise class and adds helpful chainble methods
 
 <a name="Promisie.parallel"></a>
 
-### Promisie.parallel(fns, args) ⇒ <code>Object</code>
+### Promisie.parallel(fns, args, [options]) ⇒ <code>Object</code>
 **Kind**: static method of <code>[Promisie](#Promisie)</code>  
 **Returns**: <code>Object</code> - Returns and instance of Promisie which resolves after parallel operations are complete  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| fns | <code>Object</code> &#124; <code>Array.&lt;function()&gt;</code> | Array of functions or object containing functions. If an object will resolve to an object with matching keys mapped to resolve values |
-| args | <code>\*</code> | An array of arguments or a single argument that will be passed to each function being run in parallel |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| fns | <code>Object</code> &#124; <code>Array.&lt;function()&gt;</code> |  | Array of functions or object containing functions. If an object will resolve to an object with matching keys mapped to resolve values |
+| args | <code>\*</code> |  | An array of arguments or a single argument that will be passed to each function being run in parallel |
+| [options] | <code>Object</code> | <code>{recursive: false}</code> | Options for the execution of parallel |
+| [options.recursive] | <code>boolean</code> | <code>false</code> | If true parallel will resolve nested objects |
 
 <a name="Promisie.settle"></a>
 

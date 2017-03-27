@@ -1,6 +1,12 @@
 # Promisie
-![Promisie Logo](https://raw.githubusercontent.com/typesettin/promisie/master/doc/promisie.png)
+[![Build Status](https://travis-ci.org/typesettin/promisie.svg?branch=master)](https://travis-ci.org/typesettin/promisie) [![NPM version](https://badge.fury.io/js/promisie.svg)](http://badge.fury.io/js/promisie) [![Downloads Per Month](https://img.shields.io/npm/dm/promisie.svg?maxAge=2592000)](https://www.npmjs.com/package/promisie) [![npm](https://img.shields.io/npm/dt/promisie.svg?maxAge=2592000)]() [![Join the chat at https://gitter.im/typesettin/promisie](https://badges.gitter.im/typesettin/promisie.svg)](https://gitter.im/typesettin/promisie?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+[![Download Stats](https://nodei.co/npm/promisie.png?downloads=true&downloadRank=true)](https://www.npmjs.com/package/promisie)
+
 Promisie is an extension of the ES6 native Promise class that provides helpful static methods that are seen in many other Promise libraries
+
+![Promisie Logo](https://raw.githubusercontent.com/typesettin/promisie/master/doc/promisie.png)
+
 ### Version
 1.6.0
 ### Installation
@@ -63,6 +69,11 @@ $ npm i promisie
 $ cd ./node_modules/promisie
 $ npm i
 $ npm test
+```
+### For generating documentation
+```sh
+$ grunt doc
+$ jsdoc2md utility/**/*.js index.js > doc/api.md
 ```
 ### Todos
 - Add more prototype and static methods
