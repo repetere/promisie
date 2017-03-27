@@ -63,6 +63,9 @@ Promisie now has many more helpful methods:
 See documentation for more details and test for usage
 */
 ```
+### Notes
+* Check out [https://github.com/typesettin/promisie](https://github.com/typesettin/promisie) for the full promisie Documentation
+
 ### Testing
 ```sh
 $ npm i promisie
