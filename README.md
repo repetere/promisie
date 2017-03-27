@@ -5,7 +5,8 @@
 
 Promisie is an extension of the ES6 native Promise class that provides helpful static methods that are seen in many other Promise libraries
 
-![Promisie Logo](https://raw.githubusercontent.com/typesettin/promisie/master/doc/promisie.png)
+
+<p style="text-align:center;"><img src="https://raw.githubusercontent.com/typesettin/promisie/master/doc/promisie.png" alt="Promisie Logo" width="300px" height="auto" style="margin:auto; text-align:center;"></p>
 
 ### Version
 1.6.0
