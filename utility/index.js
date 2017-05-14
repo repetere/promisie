@@ -1,4 +1,5 @@
 'use strict';
+const path = require('path');
 const series_generator = require('./series_generator');
 const series_iterator = require('./iterator');
 const divide = require('./divisions');
@@ -7,6 +8,7 @@ const parallel_generator = require('./parallel_generator');
 const settle_generator = require('./settle_generator');
 const dowhilst_generator = require('./dowhilst_generator');
 const retry_generator = require('./retry_generator');
+const { QUEUE } = require(path.join(__dirname, '../bin/index'));
 
 var _series = function (operations, cb) {
   for (let i = 0; i < operations.length; i++) {
@@ -17,21 +19,14 @@ var _series = function (operations, cb) {
   iterate();
 };
 
-var _map = function (operations, concurrency, cb) {
-  if (!Array.isArray(operations)) cb(new TypeError('ERROR: map can only be called with an Array'));
+var _map = function (operation, values, concurrency, cb) {
+  if (!Array.isArray(values)) cb(new TypeError('ERROR: map can only be called with an Array'));
   cb = (typeof concurrency === 'function') ? concurrency : cb;
-  let operator;
-  let iterate;
-  if (!operations.length) return [];
-  else {
-    if (typeof concurrency !== 'number' || concurrency === 0) operator = series_generator([operations]);
-    else {
-      let divisions = divide(operations, concurrency);
-      operator = series_generator(divisions);
-    }
-    iterate = series_iterator(operator, cb);
-    iterate([]);
-  }
+  let queue = new QUEUE(operation, concurrency, values);
+  return queue.insert(...queue.values)
+    .resolve()
+    .then(result => cb(null, result))
+    .catch(cb);
 };
 
 var _settle = function (fns) {
