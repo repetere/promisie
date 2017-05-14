@@ -121,10 +121,7 @@ class Promisie extends Promise {
       fn = concurrency;
       concurrency = undefined;
     }
-    let operations = datas.map(data => {
-      return () => fn(data);
-    });
-    return Promisie.promisify(UTILITY._map)(operations, concurrency);
+    return Promisie.promisify(UTILITY._map)(fn, datas, concurrency);
   }
   /**
    * @static each static method
