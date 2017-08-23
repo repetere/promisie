@@ -1,4 +1,5 @@
 # Promisie
+[![Coverage Status](https://coveralls.io/repos/github/typesettin/promisie/badge.svg?branch=master)](https://coveralls.io/github/typesettin/promisie?branch=master)
 [![Build Status](https://travis-ci.org/typesettin/promisie.svg?branch=master)](https://travis-ci.org/typesettin/promisie) [![NPM version](https://badge.fury.io/js/promisie.svg)](http://badge.fury.io/js/promisie) [![Downloads Per Month](https://img.shields.io/npm/dm/promisie.svg?maxAge=2592000)](https://www.npmjs.com/package/promisie) [![npm](https://img.shields.io/npm/dt/promisie.svg?maxAge=2592000)]() [![Join the chat at https://gitter.im/typesettin/promisie](https://badges.gitter.im/typesettin/promisie.svg)](https://gitter.im/typesettin/promisie?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 [![Download Stats](https://nodei.co/npm/promisie.png?downloads=true&downloadRank=true)](https://www.npmjs.com/package/promisie)
