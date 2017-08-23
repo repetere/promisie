@@ -9,7 +9,7 @@ Promisie is an extension of the ES6 native Promise class that provides helpful s
 <p style="text-align:center;"><img src="https://raw.githubusercontent.com/typesettin/promisie/master/doc/promisie.png" alt="Promisie Logo" width="300px" height="auto" style="margin:auto; text-align:center;"></p>
 
 ### Version
-1.6.0
+2.0.0-alpha.0
 ### Installation
 Because Promisie uses native ES6 Promises, classes and spread operators you must be running Node v6.0.0 or above
 ```sh
