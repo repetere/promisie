@@ -5,10 +5,10 @@
  */
 
 /*!
- * Main exports
+ * Dependencies that are used for multiple exports are required here only once
  */
 
-var exports = module.exports = {};
+var pathval = require('pathval');
 
 /*!
  * test utility
@@ -70,28 +70,22 @@ exports.transferFlags = require('./transferFlags');
 exports.eql = require('deep-eql');
 
 /*!
- * Deep path value
- */
-
-exports.getPathValue = require('./getPathValue');
-
-/*!
  * Deep path info
  */
 
-exports.getPathInfo = require('./getPathInfo');
+exports.getPathInfo = pathval.getPathInfo;
 
 /*!
  * Check if a property exists
  */
 
-exports.hasProperty = require('./hasProperty');
+exports.hasProperty = pathval.hasProperty;
 
 /*!
  * Function name
  */
 
-exports.getName = require('./getName');
+exports.getName = require('get-func-name');
 
 /*!
  * add Property
@@ -128,3 +122,51 @@ exports.addChainableMethod = require('./addChainableMethod');
  */
 
 exports.overwriteChainableMethod = require('./overwriteChainableMethod');
+
+/*!
+ * Compare by inspect method
+ */
+
+exports.compareByInspect = require('./compareByInspect');
+
+/*!
+ * Get own enumerable property symbols method
+ */
+
+exports.getOwnEnumerablePropertySymbols = require('./getOwnEnumerablePropertySymbols');
+
+/*!
+ * Get own enumerable properties method
+ */
+
+exports.getOwnEnumerableProperties = require('./getOwnEnumerableProperties');
+
+/*!
+ * Checks error against a given set of criteria
+ */
+
+exports.checkError = require('check-error');
+
+/*!
+ * Proxify util
+ */
+
+exports.proxify = require('./proxify');
+
+/*!
+ * addLengthGuard util
+ */
+
+exports.addLengthGuard = require('./addLengthGuard');
+
+/*!
+ * isProxyEnabled helper
+ */
+
+exports.isProxyEnabled = require('./isProxyEnabled');
+
+/*!
+ * isNaN method
+ */
+
+exports.isNaN = require('./isNaN');
