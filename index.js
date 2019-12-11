@@ -1,5 +1,5 @@
 'use strict';
-const UTILITY = require('./src/index');
+const UTILITY = require('./legacy_src/index');
 const CHAINABLES = UTILITY.chainables;
 /**
  * Promisie inherits from the Promise class and adds helpful chainble methods
