@@ -84,4 +84,35 @@ export default class Promisie<T> extends Promise<T> {
 
     return promisified;
   }
+
+  static async series<T>(fns: Array<(...args: any[]) => any>): Promise<T> {
+    let last;
+    for (let i = 0; i < fns.length; i++) {
+      last = await fns[i](last);
+    }
+    return last;
+  }
+
+  static pipe<T>(fns: Array<(...args: any[]) => any>): (...args: any[]) => Promise<T> {
+    return async function(...args: any[]): Promise<T> {
+      const operations = Object.assign([], fns) as Array<(...args: any[]) => any>;
+      const first = operations[0];
+      operations[0] = function(): any {
+        return first(...args);
+      }
+      return await Promisie.series<T>(fns);
+    }
+  }
+
+  static compose<T>(fns: Array<(...args: any[]) => any>): (...args: any[]) => Promise<T> {
+    return Promisie.pipe<T>(fns.reverse());
+  }
+
+  static map<T>(datas: any[], concurrency: any, fn?: (arg: any) => any): Promisie<T> {
+    const method = (typeof concurrency === 'function')
+      ? concurrency
+      : fn;
+    return Promisie.promisify(utilities.map)<T>(method, datas, concurrency);
+  }
+
 }
