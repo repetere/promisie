@@ -108,11 +108,19 @@ export default class Promisie<T> extends Promise<T> {
     return Promisie.pipe<T>(fns.reverse());
   }
 
-  static map<T>(datas: any[], concurrency: any, fn?: (arg: any) => any): Promisie<T> {
+  static map<T>(datas: any[], concurrency: any, fn?: (arg: any) => any): Promisie<Array<T>> {
     const method = (typeof concurrency === 'function')
       ? concurrency
       : fn;
-    return Promisie.promisify(utilities.map)<T>(method, datas, concurrency);
+    return Promisie.promisify(utilities.map)<Array<T>>(method, datas, concurrency);
   }
 
+  static each<T>(datas: T[], concurrency: any, fn?: (arg: any) => any): Promisie<Array<T>> {
+    return Promisie.map<T>(datas, concurrency, fn)
+      .then(() => datas);
+  }
+
+  static parallel<T>(fns: { [key: string]: any }, args: any, concurrency?: number): Promisie<{ [key: string]: any }> {
+    return Promisie.promisify(utilities.parallel)<T>(fns, args, concurrency);
+  }
 }

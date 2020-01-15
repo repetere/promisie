@@ -28,14 +28,14 @@
   }
  }
 
- interface QueueNodeOptions {
+export interface QueueNodeOptions {
   action: any;
   timeout?: number;
   index: number;
   value: any;
  }
 
- class QueueNode {
+ export class QueueNode {
   action: any;
   timeout?: number;
   index: number;
@@ -80,7 +80,7 @@
   }
  }
 
-function decompress(data?: QueueNode) {
+function decompress(data?: QueueNode): any {
   let result = [];
   let current = data;
   while (current) {
@@ -107,6 +107,14 @@ function handleResolve(this: Queue, resolve: (value?: any) => void, reject: (val
   }
 };
 
+export interface QueueOptions {
+  action: any;
+  concurrency?: number;
+  timeout?: number;
+  values?: any[];
+  decompress?: (data?: QueueNode) => any;
+}
+
  export default class Queue {
   action: any;
   concurrency: number;
@@ -118,18 +126,20 @@ function handleResolve(this: Queue, resolve: (value?: any) => void, reject: (val
   [IS_REJECTED]: boolean;
   root?: QueueNode;
   length: number;
+  decompress: (data?: QueueNode) => void;
 
-  constructor(action: any, concurrency?: number, timeout?: number, values: any[] = []) {
-    this.action = action;
-    this.concurrency = concurrency || Infinity;
-    this.values = values;
+  constructor(options: QueueOptions) {
+    this.action = options.action;
+    this.concurrency = options.concurrency || Infinity;
+    this.values = options.values || [];
     this.active = 0;
-    this.timeout = timeout || 0;
+    this.timeout = options.timeout || 0;
     this.current = undefined;
     this[IS_PAUSED] = false;
     this[IS_REJECTED] = false;
     this.root = undefined;
     this.length = 0;
+    this.decompress = (options.decompress || decompress).bind(this);
   }
 
   insert(...args: any[]): Queue {

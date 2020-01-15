@@ -7,9 +7,13 @@ export default function map<T>(
   concurrency: any,
   cb?: (...args: any[]) => void,
 ) {
-  const callback = cb = (typeof concurrency === 'function') ? concurrency : cb;
-  const queue = new Queue(operation, concurrency, undefined, values);
-  const p = queue.insert(...queue.values).resolve() as Promise<T>
+  const callback = (typeof concurrency === 'function') ? concurrency : cb;
+  const conc = (typeof concurrency === 'number') ? concurrency : undefined;
+  const queue = new Queue({
+    action: operation,
+    concurrency: conc,
+  });
+  const p = queue.insert(...values).resolve() as Promise<Array<T>>
   return p
     .then(result => callback(null, result))
     .catch(callback);
