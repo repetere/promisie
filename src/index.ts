@@ -1,8 +1,19 @@
 import utilities from './utilities';
+import { SettleValues } from './utilities/settle';
 
 export interface PromisifyAllOptions {
   recursive?: boolean;
   readonly?: boolean;
+}
+
+export interface ParallelOptions {
+  recursive?: boolean;
+  concurrency?: number;
+}
+
+export interface RetryOptions {
+  times?: number;
+  timeout?: number;
 }
 
 export interface PromisifyAllObjectParam {
@@ -120,7 +131,48 @@ export default class Promisie<T> extends Promise<T> {
       .then(() => datas);
   }
 
-  static parallel<T>(fns: { [key: string]: any }, args: any, concurrency?: number): Promisie<{ [key: string]: any }> {
+  static parallel<T>(fns: { [key: string]: any }, args?: any, options: ParallelOptions = {}): Promisie<{ [key: string]: any }> {
+    const { recursive = false, concurrency } = options;
+    if (recursive) {
+      fns = utilities.handleRecursiveParallel<T>(fns);
+    }
     return Promisie.promisify(utilities.parallel)<T>(fns, args, concurrency);
+  }
+
+  static settle(fns: any[], concurrency?: number): Promisie<SettleValues> {
+    return Promisie.promisify(utilities.settle)<SettleValues>(fns, concurrency);
+  }
+
+  static async doWhilst<T>(fn: Function, evaluate: (arg: any) => boolean): Promise<T> {
+    let current: T;
+    do {
+      current = await fn();
+    } while(evaluate(current));
+    return current;
+  }
+
+  static sleep(timeout: number): Promisie<void> {
+    return new Promisie((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, timeout);
+    });
+  }
+
+  static async retry<T>(fn: Function, options?: RetryOptions): Promise<T | void> {
+    let { times = 3, timeout = 0 } = options || {};
+    let current: T | void = undefined;
+    do {
+      try {
+        current = await fn();
+        return current;
+      } catch (e) {
+        if (times === 1) {
+          throw e;
+        }
+        await Promisie.sleep(timeout);
+      }
+    } while(--times > 0);
+    return current;
   }
 }

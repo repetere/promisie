@@ -1,4 +1,5 @@
 import Queue, { QueueNode } from './queue';
+import Promisie from '../';
 
 interface ParallelOperation {
   operation: any;
@@ -44,4 +45,17 @@ export default function parallel<T>(
   return p
     .then(result => callback(null, result))
     .catch(callback);
+}
+
+export function handleRecursiveParallel<T>(fns: { [key: string]: any }): { [key: string]: any } {
+  return Object.keys(fns).reduce((result: { [key: string]: any }, key: string) => {
+    if (fns[key] && typeof fns[key] === 'object') {
+      result[key] = () => (
+        Promisie.parallel<T>(handleRecursiveParallel(fns[key]))
+      );
+    } else {
+      result[key] = key;
+    }
+    return result;
+  }, {});
 }
