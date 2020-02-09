@@ -39,7 +39,7 @@ export default class Promisie<T> extends Promise<T> {
   static promisify(
     fn: (...args: any[]) => void,
     _this?: any
-  ): <T>(...args: any[]) => Promisie<T> {
+  ): <T = any>(...args: any[]) => Promisie<T> {
     const promisified = function<T>(this: any, ...args: any[]): Promisie<T> {
       return new Promisie((resolve, reject) => {
         args.push(function(err: any, data: any) {
@@ -96,7 +96,7 @@ export default class Promisie<T> extends Promise<T> {
     return promisified;
   }
 
-  static async series<T>(fns: Array<(...args: any[]) => any>): Promise<T> {
+  static async series<T = any>(fns: Array<(...args: any[]) => any>): Promise<T> {
     let last;
     for (let i = 0; i < fns.length; i++) {
       last = await fns[i](last);
@@ -104,7 +104,7 @@ export default class Promisie<T> extends Promise<T> {
     return last;
   }
 
-  static pipe<T>(fns: Array<(...args: any[]) => any>): (...args: any[]) => Promise<T> {
+  static pipe<T = any>(fns: Array<(...args: any[]) => any>): (...args: any[]) => Promise<T> {
     return async function(...args: any[]): Promise<T> {
       const operations = Object.assign([], fns) as Array<(...args: any[]) => any>;
       const first = operations[0];
@@ -115,23 +115,23 @@ export default class Promisie<T> extends Promise<T> {
     }
   }
 
-  static compose<T>(fns: Array<(...args: any[]) => any>): (...args: any[]) => Promise<T> {
+  static compose<T = any>(fns: Array<(...args: any[]) => any>): (...args: any[]) => Promise<T> {
     return Promisie.pipe<T>(fns.reverse());
   }
 
-  static map<T>(datas: any[], concurrency: any, fn?: (arg: any) => any): Promisie<Array<T>> {
+  static map<T = any>(datas: any[], concurrency: any, fn?: (arg: any) => any): Promisie<Array<T>> {
     const method = (typeof concurrency === 'function')
       ? concurrency
       : fn;
     return Promisie.promisify(utilities.map)<Array<T>>(method, datas, concurrency);
   }
 
-  static each<T>(datas: T[], concurrency: any, fn?: (arg: any) => any): Promisie<Array<T>> {
+  static each<T = any>(datas: T[], concurrency: any, fn?: (arg: any) => any): Promisie<Array<T>> {
     return Promisie.map<T>(datas, concurrency, fn)
       .then(() => datas);
   }
 
-  static parallel<T>(fns: { [key: string]: any }, args?: any, options: ParallelOptions = {}): Promisie<{ [key: string]: any }> {
+  static parallel<T = any>(fns: { [key: string]: any }, args?: any, options: ParallelOptions = {}): Promisie<{ [key: string]: any }> {
     const { recursive = false, concurrency } = options;
     if (recursive) {
       fns = utilities.handleRecursiveParallel<T>(fns);
@@ -143,12 +143,12 @@ export default class Promisie<T> extends Promise<T> {
     return Promisie.promisify(utilities.settle)<SettleValues>(fns, concurrency);
   }
 
-  static async doWhilst<T>(fn: Function, evaluate: (arg: any) => boolean): Promise<T> {
-    let current: T;
-    do {
-      current = await fn();
-    } while(evaluate(current));
-    return current;
+  static iterate<T = any>(generator: (arg?: any) => Generator, initial: any): Promisie<T> {
+    return Promisie.promisify(utilities.iterator)<T>(generator(initial));
+  }
+
+  static doWhilst<T = any>(fn: () => T | Promise<T>, evaluate: (arg: T) => boolean): Promisie<T> {
+    return Promisie.iterate<T>(utilities.doWhilst(fn, evaluate), null);
   }
 
   static sleep(timeout: number): Promisie<void> {
@@ -159,20 +159,8 @@ export default class Promisie<T> extends Promise<T> {
     });
   }
 
-  static async retry<T>(fn: Function, options?: RetryOptions): Promise<T | void> {
-    let { times = 3, timeout = 0 } = options || {};
-    let current: T | void = undefined;
-    do {
-      try {
-        current = await fn();
-        return current;
-      } catch (e) {
-        if (times === 1) {
-          throw e;
-        }
-        await Promisie.sleep(timeout);
-      }
-    } while(--times > 0);
-    return current;
+  static retry<T = any>(fn: () => T | Promise<T>, options?: RetryOptions): Promisie<T | void> {
+    const { times = 3, timeout = 0 } = options || {};
+    return Promisie.iterate<T>(utilities.retry(fn, { times, timeout }), null);
   }
 }

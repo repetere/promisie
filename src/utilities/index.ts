@@ -3,6 +3,9 @@ import safeAssign from './safe-assign';
 import map from './map';
 import parallel, { handleRecursiveParallel } from './parallel';
 import settle from './settle';
+import iterator from './iterator';
+import doWhilst from './dowhilst';
+import retry from './retry';
 
 export default {
   safeAssign,
@@ -10,4 +13,7 @@ export default {
   parallel,
   handleRecursiveParallel,
   settle,
+  iterator,
+  doWhilst,
+  retry,
 }
