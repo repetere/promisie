@@ -1,28 +1,28 @@
 import Queue, { QueueNode } from './queue';
 
-export interface SettleValues {
-  fulfilled: Fulfilled[];
+export interface SettleValues<T = any> {
+  fulfilled: Fulfilled<T>[];
   rejected: Rejected[];
 }
 
-export interface Fulfilled {
-  value: any;
+export interface Fulfilled<T = any> {
+  value: T;
   status: 'fulfilled';
 }
 
 export interface Rejected {
-  value: any;
+  value: Error;
   status: 'rejected';
 }
 
-export default function settle(
+export default function settle<T = any>(
   fns: any[],
   concurrency: any,
   cb?: (...args: any[]) => void,
 ) {
   const callback = (typeof concurrency === 'function') ? concurrency : cb;
   const conc = (typeof concurrency === 'number') ? concurrency : undefined;
-  const fulfilled: Fulfilled[] = [];
+  const fulfilled: Fulfilled<T>[] = [];
   const rejected: Rejected[] = [];
   const queue = new Queue({
     action(operation: any): any {

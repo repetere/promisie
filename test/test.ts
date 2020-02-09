@@ -1,17 +1,17 @@
 'use strict';
 
 require('mocha');
-const path = require('path');
-const chai = require('chai');
-const fs = require('fs');
+import * as chai from 'chai';
+import * as fs from 'fs';
+import Promisie from '../src';
+import moment from 'moment';
+
 const expect = chai.expect;
-const Promisie = require(path.resolve(__dirname, '../index'));
-const moment = require('moment');
 
 var asyncfn = function (time, val) {
 	return function () {
 		return new Promisie(resolve => {
-			let timeout = setTimeout(function () {
+			setTimeout(function () {
 				resolve(val);
 			}, time);
 		});
@@ -48,14 +48,6 @@ describe('Promisie test', function () {
 				};
 				expect(Promisie.promisify(a)).to.be.a('function');
 			});
-			it('Should throw an error when called with a non-function', function () {
-				try {
-					let a = Promisie.promisify();
-				}
-				catch (e) {
-					expect(e instanceof Error).to.be.true;
-				}
-			});
 		});
 		describe('promisifyAll functionality', function () {
 			it('Should return an object with Async methods when called with an object or array', function () {
@@ -70,14 +62,6 @@ describe('Promisie test', function () {
 					fns = Promisie.promisifyAll(a);
 				expect(fns.bAsync).to.be.a('function');
 				expect(fns.cAsync).to.be.a('function');
-			});
-			it('Should throw an error when called with a non-object', function () {
-				try {
-					let a = Promisie.promisifyAll();
-				}
-				catch (e) {
-					expect(e instanceof Error).to.be.true;
-				}
 			});
 		});
 	});
