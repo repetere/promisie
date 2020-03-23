@@ -1,11 +1,22 @@
 {
   "name": "promisie",
-  "version": "2.0.0-alpha.0",
-  "description": "helpful add-on functionality for es6 Promises",
-  "main": "index.js",
+  "version": "2.1.0",
+  "description": "Some module",
+  "main": "dist/index.cjs.js",
+  "module": "build/index.js",
+  "esm": "dist/index.esm.js",
+  "browser": "dist/index.umd.js",
+  "web": "dist/index.web.js",
+  "modules.root": "build",
+  "type": "module",
   "scripts": {
-    "test": "mocha test ./test/test.js",
-    "start": "node ./index.js"
+    "dev": "rollup -c -w",
+    "benchmark": "node -r esm  benchmark/main_bmrk.js",
+    "test": "jest --coverage",
+    "doc": "tsc && typedoc && sitedown manual/ -b docs/manual",
+    "compile": "tsc",
+    "build": "tsc && rollup -c && typedoc && sitedown manual/ -b docs/manual",
+    "coverage": "coveralls"
   },
   "keywords": [
     "promise",
@@ -33,37 +44,65 @@
   "author": "Jan Bialostok <janbialostok@gmail.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/janbialostok/promisie"
+    "url": "https://github.com/repetere/promisie"
   },
   "license": "MIT",
   "analyze": true,
-  "dependencies": {
-    "babelify-es6-polyfill": "^1.0.4"
-  },
+  "contributors": [
+    {
+      "name":"Yaw Joseph Etse",
+      "email": "yaw.etse@gmail.com"
+    }
+  ],
   "devDependencies": {
-    "babel-preset-es2015": "^6.18.0",
-    "babel-preset-es2016": "^6.16.0",
-    "babel-preset-es2017": "^6.16.0",
-    "babel-preset-react": "^6.16.0",
-    "babelify": "7.3.0",
-    "browserify": "^13.0.0",
-    "chai": "^3.4.1",
-    "coveralls": "^2.11.15",
-    "grunt": "~0.4.5",
-    "grunt-browserify": "^5.0.0",
-    "grunt-contrib-jshint": "~0.11.2",
-    "grunt-contrib-watch": "~0.6.1",
-    "grunt-coveralls": "^1.0.1",
-    "grunt-jsbeautifier": "~0.2.10",
-    "grunt-jsdoc": "~0.6.7",
-    "grunt-mocha-cov": "^0.4.0",
-    "grunt-mocha-istanbul": "^5.0.2",
-    "grunt-newer": "~1.1.1",
-    "grunt-simple-mocha": "~0.4.0",
-    "istanbul": "^0.4.5",
-    "jsdoc": "^3.4.3",
-    "mocha": "^2.4.4",
-    "mocha-lcov-reporter": "^1.2.0",
-    "moment": "^2.17.1"
+    "benchmark": "^2.1.4",
+    "chai-as-promised": "^7.1.1",
+    "coveralls": "^3.0.7",
+    "microtime": "^3.0.0",
+    "mocha": "^6.1.3",
+    "mocha-sinon": "^2.1.0",
+    "moment": "^2.24.0",
+    "nyc": "^14.0.0",
+    "prettier": "^1.18.2",
+    "sinon-chai": "^3.2.0",
+    "ts-node": "^8.4.1",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.6.4",
+    "@rollup/plugin-alias": "^3.0.1",
+    "@rollup/plugin-commonjs": "^11.0.2",
+    "@rollup/plugin-node-resolve": "^7.1.1",
+    "@rollup/plugin-replace": "^2.3.1",
+    "@rollup/plugin-typescript": "^3.0.0",
+    "@types/chai": "^4.2.9",
+    "@types/enzyme": "^3.10.5",
+    "@types/enzyme-adapter-react-16": "^1.0.6",
+    "@types/jest": "^25.1.3",
+    "@types/react": "^16.9.23",
+    "@types/react-dom": "^16.9.5",
+    "@types/sinon": "^7.5.2",
+    "chai": "^4.2.0",
+    "enzyme": "^3.11.0",
+    "enzyme-adapter-react-16": "^1.15.2",
+    "install": "^0.13.0",
+    "jest": "^25.1.0",
+    "npm": "^6.14.0",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "rollup": "^1.31.1",
+    "rollup-plugin-node-builtins": "^2.1.2",
+    "rollup-plugin-node-globals": "^1.2.1",
+    "rollup-plugin-terser-js": "^1.0.2",
+    "sinon": "^9.0.0",
+    "ts-jest": "^25.2.1",
+    "tslib": "^1.11.0",
+    "typedoc": "^0.16.10"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "globals": {
+      "ts-jest": {
+        "diagnostics": false
+      }
+    }
   }
 }
