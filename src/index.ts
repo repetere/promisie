@@ -294,3 +294,6 @@ export default class Promisie<T = any> extends Promise<T> {
     return Promisie.iterate<T>(utilities.retry(fn, { times, timeout }), null);
   }
 }
+
+// const p = Promisie;
+// export default p;

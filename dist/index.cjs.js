@@ -578,6 +578,8 @@ class Promisie extends Promise {
         return Promisie.iterate(utilities.retry(fn, { times, timeout }), null);
     }
 }
+// const p = Promisie;
+// export default p;
 
 exports.default = Promisie;
 //# sourceMappingURL=index.cjs.js.map

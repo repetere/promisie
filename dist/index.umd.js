@@ -1,8 +1,8 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-  typeof define === 'function' && define.amd ? define(['exports'], factory) :
-  (global = global || self, factory((typeof global!=="undefined" ? global : window).promisie = {}));
-}(this, (function (exports) { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+  typeof define === 'function' && define.amd ? define(factory) :
+  (global = global || self, (typeof global!=="undefined" ? global : window).promisie = factory());
+}(this, (function () { 'use strict';
 
   function safeAssign(data) {
       let result = {};
@@ -580,10 +580,10 @@
           return Promisie.iterate(utilities.retry(fn, { times, timeout }), null);
       }
   }
+  // const p = Promisie;
+  // export default p;
 
-  exports.default = Promisie;
-
-  Object.defineProperty(exports, '__esModule', { value: true });
+  return Promisie;
 
 })));
 //# sourceMappingURL=index.umd.js.map

@@ -48,9 +48,12 @@
   },
   "license": "MIT",
   "analyze": true,
-  "dependencies": {
-    "babelify-es6-polyfill": "^1.0.4"
-  },
+  "contributors": [
+    {
+      "name":"Yaw Joseph Etse",
+      "email": "yaw.etse@gmail.com"
+    }
+  ],
   "devDependencies": {
     "benchmark": "^2.1.4",
     "chai-as-promised": "^7.1.1",

@@ -1,4 +1,4 @@
-var promisie = (function (exports) {
+var promisie = (function () {
   'use strict';
 
   function safeAssign(data) {
@@ -577,10 +577,10 @@ var promisie = (function (exports) {
           return Promisie.iterate(utilities.retry(fn, { times, timeout }), null);
       }
   }
+  // const p = Promisie;
+  // export default p;
 
-  exports.default = Promisie;
+  return Promisie;
 
-  return exports;
-
-}({}));
+}());
 //# sourceMappingURL=index.web.js.map

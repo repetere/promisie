@@ -574,6 +574,8 @@ class Promisie extends Promise {
         return Promisie.iterate(utilities.retry(fn, { times, timeout }), null);
     }
 }
+// const p = Promisie;
+// export default p;
 
 export default Promisie;
 //# sourceMappingURL=index.esm.js.map

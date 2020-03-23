@@ -9,11 +9,11 @@ import pkg from "./package.json";
 
 const name = 'promisie';
 const external = [
-  "react",
-  "react-dom",
+  // "react",
+  // "react-dom",
 ];
 const windowGlobals = {
-  react: "React"
+  // react: "React"
 };
 
 function getOutput({ minify = false, server = false, }) {
@@ -36,7 +36,7 @@ function getOutput({ minify = false, server = false, }) {
     [ {
       file: pkg.browser,
       format: "umd",
-      exports: "named",
+      exports: "default",
       name,
       globals:windowGlobals,
       sourcemap: true
@@ -44,7 +44,7 @@ function getOutput({ minify = false, server = false, }) {
     {
       file: pkg.web,
       format: "iife",
-      exports: "named",
+      exports: "default",
       name,
       globals:windowGlobals,
       sourcemap: true
