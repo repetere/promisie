@@ -1,6 +1,6 @@
 {
   "name": "promisie",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "Some module",
   "main": "dist/index.cjs.js",
   "module": "build/index.js",
