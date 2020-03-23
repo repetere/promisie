@@ -6,6 +6,7 @@ import settle from './settle';
 import iterator from './iterator';
 import doWhilst from './dowhilst';
 import retry from './retry';
+import series from './series';
 
 export default {
   safeAssign,
@@ -16,4 +17,5 @@ export default {
   iterator,
   doWhilst,
   retry,
+  series,
 }

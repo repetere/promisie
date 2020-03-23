@@ -1,15 +1,11 @@
-'use strict';
 
-// require('mocha');
-// import * as chai from 'chai';
-import { expect, } from 'chai';
-import * as fs from 'fs';
 import Promisie from './index';
+import fs from 'fs';
 import moment from 'moment';
 
-var asyncfn = function (time: number, val:any) {
-	return function () {
-		return new Promisie(resolve => {
+function asyncfn(time: number, val:any) {
+	return function<T>() {
+		return new Promisie<T>(resolve => {
 			setTimeout(function () {
 				resolve(val);
 			}, time);
@@ -17,18 +13,18 @@ var asyncfn = function (time: number, val:any) {
 	};
 };
 
-describe('Promisie test', function () {
-	describe('Basic assertions', function () {
-		it('Should be a constructor function', function () {
-			expect(typeof Promisie === 'function').to.be.true;
+describe('Promisie test', () => {
+  describe('basic assumptions', () => {
+    it('Should be a constructor function', function () {
+			expect(typeof Promisie === 'function').toBeTruthy
 		});
 		it('Should have methods promisify and promisifyAll', function () {
-			expect(Promisie.promisify).to.be.a('function');
-			expect(Promisie.promisifyAll).to.be.a('function');
+			expect(typeof Promisie.promisify).toEqual('function')
+			expect(typeof Promisie.promisifyAll).toEqual('function');
 		});
 		it('Should return an instance of a promise if called with "new" keyword', function () {
 			let a = new Promisie(function () { });
-			expect(a instanceof Promise).to.be.true;
+			expect(a instanceof Promise).toBeTruthy
 		});
 		it('Should be chainable if a new Promisie is returned', function () {
 			let a = function () {
@@ -36,16 +32,17 @@ describe('Promisie test', function () {
 					resolve();
 				});
 			};
-			expect(a().then).to.be.a('function');
+			expect(typeof a().then).toEqual('function');
 		});
-	});
-	describe('Basic static method tests', function () {
+  });
+
+  describe('Basic static method tests', function () {
 		describe('promisify functionality', function () {
 			it('Should return a function when called with a function', function () {
 				let a = function () {
 					return;
 				};
-				expect(Promisie.promisify(a)).to.be.a('function');
+				expect(typeof Promisie.promisify(a)).toEqual('function');
 			});
 		});
 		describe('promisifyAll functionality', function () {
@@ -59,12 +56,13 @@ describe('Promisie test', function () {
 					}
 				},
 					fns = Promisie.promisifyAll(a);
-				expect(fns.bAsync).to.be.a('function');
-				expect(fns.cAsync).to.be.a('function');
+				expect(typeof fns.bAsync).toEqual('function');
+				expect(typeof fns.cAsync).toEqual('function');
 			});
 		});
-	});
-	describe('Static method testing with async functions', function () {
+  });
+  
+  describe('Static method testing with async functions', function () {
 		let a = function (str, cb) {
 			setTimeout(function () {
 				if (str instanceof Error) {
@@ -73,7 +71,7 @@ describe('Promisie test', function () {
 				else {
 					cb(null, str);
 				}
-			}, 2000);
+			}, 200);
 		},
 			b = {
 				c: function (str, cb) {
@@ -84,7 +82,7 @@ describe('Promisie test', function () {
 						else {
 							cb(null, str);
 						}
-					}, 2000);
+					}, 200);
 				},
 				d: function (str, cb) {
 					setTimeout(function () {
@@ -94,7 +92,7 @@ describe('Promisie test', function () {
 						else {
 							cb(null, str);
 						}
-					}, 4000);
+					}, 400);
 				},
 				e: 'e',
 				f: {
@@ -106,7 +104,7 @@ describe('Promisie test', function () {
 							else {
 								cb(null, str);
 							}
-						}, 4000);
+						}, 400);
 					}
 				}
 			},
@@ -115,20 +113,19 @@ describe('Promisie test', function () {
 				this.log = function (cb) {
 					setTimeout(() => {
 						cb(null, this.msg);
-					}, 2000);
+					}, 200);
 				};
 			},
 			f = new testConstructor('hello');
 		describe('promisify functionality', function () {
-			this.timeout(7000);
 			let test = Promisie.promisify(a);
 			it('Should return a function that returns and instance of a Promise', function () {
-				expect(test('') instanceof Promise).to.be.true;
+				expect(test('') instanceof Promise).toBeTruthy;
 			});
 			it('Should be chainable and resolve the promisified function', function (done) {
 				test('hello')
 					.then(msg => {
-						expect(msg).to.equal('hello');
+						expect(msg).toEqual('hello');
 						done();
 					});
 			});
@@ -136,53 +133,51 @@ describe('Promisie test', function () {
 				test(new Error('Test Error'))
 					.then(msg => { })
 					.catch(e => {
-						expect(e instanceof Error).to.be.true;
+						expect(e instanceof Error).toBeTruthy;
 						done();
 					});
 			});
 			it('Should be able to promisify prototype metods if "this" is passed as second argument', function (done) {
-				this.timeout(3000);
 				let test = Promisie.promisify(f.log, f);
 				test().then(msg => {
-					expect(msg).to.equal('hello');
+					expect(msg).toEqual('hello');
 					done();
 				});
 			});
 		});
 		describe('promisifyAll functionality', function () {
-			this.timeout(20000);
-			let test = Promisie.promisifyAll(b, undefined, { recursive: true, readonly: false });
+      let test = Promisie.promisifyAll(b, undefined, { recursive: true, readonly: false });
 			it('Should return Async methods that are instances of Promises', function () {
-				expect(test.cAsync('') instanceof Promise).to.be.true;
-				expect(test.dAsync('') instanceof Promise).to.be.true;
-				expect(test.eAsnyc).to.equal(undefined);
-				expect(test.f).to.be.an('object');
-				expect(test.f.gAsync('') instanceof Promise).to.be.true;
+				expect(test.cAsync('') instanceof Promise).toBeTruthy;
+				expect(test.dAsync('') instanceof Promise).toBeTruthy;
+				expect(test.eAsnyc).toEqual(undefined);
+				expect(typeof test.f).toEqual('object');
+				expect(test.f.gAsync('') instanceof Promise).toBeTruthy;
 			});
 			it('Async methods should be chainable', function (done) {
 				test.cAsync('hello')
 					.then(msg => {
-						expect(msg).to.equal('hello');
+						expect(msg).toEqual('hello');
 						return test.dAsync('world');
 					})
 					.then(msg => {
-						expect(msg).to.equal('world');
+						expect(msg).toEqual('world');
 						done();
 					});
-			});
+			}, 1000);
 			it('Should fall into catch block if promisified function is rejected', function (done) {
 				test.cAsync(new Error('Test Error'))
 					.then(msg => { })
 					.catch(e => {
-						expect(e instanceof Error).to.be.true;
+						expect(e instanceof Error).toBeTruthy;
 						done();
 					});
 			});
 			it('Should be able to promisifyAll on core node modules', function (done) {
 				try {
 					let fsAsync = Promisie.promisifyAll(fs, undefined, { recursive: false, readonly: true });
-					expect(fsAsync).to.be.an('object');
-					expect(fsAsync.readFileAsync).to.be.a('function');
+					expect(typeof fsAsync).toEqual('object');
+					expect(typeof fsAsync.readFileAsync).toEqual('function');
 					done();
 				}
 				catch (e) {
@@ -190,69 +185,66 @@ describe('Promisie test', function () {
 				}
 			});
 		});
-	});
-	describe('Static method series testing', function () {
-		this.timeout(15000);
+  });
+  
+  describe('Static method series testing', function () {
 		it('Should be able to run a series of async functions', done => {
-			let asyncfns = [1, 2, 3, 4, 5].map(i => {
+			const asyncfns = [1, 2, 3, 4, 5].map(i => {
 				return function (val) {
 					return new Promise((resolve, reject) => {
 						setTimeout(function () {
 							resolve(i + (val || 0));
-						}, i * 250);
+						}, i * 25);
 					});
 				};
 			});
-			Promisie.series(asyncfns)
+			Promisie.series<number>(asyncfns)
 				.then(result => {
-					expect(result).to.equal(15);
+					expect(result).toEqual(15);
 					done();
 				}, done);
-		});
+    }, 1500);
+    it('Should be able to handle an array of arrays', done => {
+			const asyncfns = [1, 2, 3, 4, 5].map(i => {
+				return [function (val) {
+					return new Promise((resolve, reject) => {
+						setTimeout(function () {
+							resolve(i * 2);
+						}, i * 25);
+					});
+				}];
+			});
+			Promisie.series<number[]>(asyncfns)
+				.then(result => {
+					expect(result).toStrictEqual([2, 4, 6, 8, 10]);
+					done();
+				}, done);
+		}, 1500);
 		it('Should be able to run a series containing sync functions', done => {
-			let asyncfns = [1, 2, 3, 4, 5].map(i => {
+			const asyncfns = [1, 2, 3, 4, 5].map(i => {
 				return function (val) {
 					return new Promise((resolve, reject) => {
 						setTimeout(function () {
 							resolve(i + (val || 0));
-						}, i * 250);
+						}, i * 25);
 					});
 				};
 			});
 			asyncfns[2] = (val) => 3 + val;
-			Promisie.series(...asyncfns)
+			Promisie.series<number>(asyncfns)
 				.then(result => {
-					expect(result).to.equal(15);
+					expect(result).toEqual(15);
 					done();
 				}, done);
-		});
-		it('Should reject with an error if series contains any non-functions', done => {
-			let asyncfns = [1, 2, 3, 4, 5].map(i => {
-				return function (val) {
-					return new Promise((resolve, reject) => {
-						setTimeout(function () {
-							resolve(i + (val || 0));
-						}, i * 250);
-					});
-				};
-			});
-			asyncfns[2] = false;
-			Promisie.series(asyncfns)
-				.then(() => {
-					done(new Error('Should have rejected with an error'));
-				}, e => {
-					expect(e instanceof Error).to.be.true;
-					done();
-				});
-		});
+		}, 1500);
 		it('Should handle an error in one of the functions in the series if all functions are async', done => {
-			let asyncfns = [1, 2, 3, 4, 5].map(i => {
+			const asyncfns = [1, 2, 3, 4, 5].map(i => {
 				return function (val) {
 					return new Promise((resolve, reject) => {
 						setTimeout(function () {
 							if (i === 3) reject(i);
 							else resolve(i + (val || 0));
-						}, i * 250);
+						}, i * 25);
 					});
 				};
 			});
@@ -260,12 +252,12 @@ describe('Promisie test', function () {
 				.then(() => {
 					done(new Error('Should have rejected with an error'));
 				}, e => {
-					expect(e).to.equal(3);
+					expect(e).toEqual(3);
 					done();
 				});
-		});
+		}, 1500);
 		it('Should handle an error in one of the functions in the series if all functions are sync', done => {
-			let syncfns = [1, 2, 3, 4, 5].map(i => {
+			const syncfns = [1, 2, 3, 4, 5].map(i => {
 				return function (val) {
 					if (i === 3) throw i;
 					else return i + (val || 0);
@@ -275,37 +267,37 @@ describe('Promisie test', function () {
 				.then(() => {
 					done(new Error('Should have rejected with an error'));
 				}, e => {
-					expect(e).to.equal(3);
+					expect(e).toEqual(3);
 					done();
 				});
 		});
-	});
-	describe('.try method testing', function () {
-		this.timeout(10000);
+  });
+  
+  describe('.try method testing', function () {
 		it('Should be chainable', done => {
 			(function () {
 				return new Promisie((resolve) => {
 					setTimeout(function () {
 						resolve();
-					}, 2500);
+					}, 250);
 				});
 			})()
 				.then(() => {
 					return new Promisie((resolve) => {
 						setTimeout(function () {
 							resolve();
-						}, 1000);
+						}, 100);
 					});
 				})
 				.try(() => {
 					return new Promisie((resolve) => {
 						setTimeout(function () {
 							resolve('hello');
-						}, 1000);
+						}, 100);
 					});
 				})
 				.then(data => {
-					expect(data).to.equal('hello');
+					expect(data).toEqual('hello');
 					done();
 				})
 				.catch(done);
@@ -315,7 +307,7 @@ describe('Promisie test', function () {
 				return new Promisie((resolve) => {
 					setTimeout(function () {
 						resolve();
-					}, 2500);
+					}, 250);
 				});
 			})()
 				.try(() => {
@@ -325,65 +317,65 @@ describe('Promisie test', function () {
 					done(new Error('Should not get here'));
 				})
 				.catch(e => {
-					expect(e instanceof Error).to.be.true;
-					expect(e.message).to.equal('test error');
+					expect(e instanceof Error).toBeTruthy;
+					expect(e.message).toEqual('test error');
 					done();
 				});
 		});
-	});
-	describe('Static method pipe and compose testing', function () {
-		this.timeout(15000);
+  });
+  
+  describe('Static method pipe and compose testing', function () {
 		it('Pipe should return a function that will pass arguments to the first function in a series', done => {
-			let asyncfns = [1, 2, 3, 4, 5].map(i => {
+			const asyncfns = [1, 2, 3, 4, 5].map(i => {
 				return function (val) {
 					return new Promise((resolve, reject) => {
 						setTimeout(function () {
 							resolve(i + (val || 0));
-						}, i * 250);
+						}, i * 25);
 					});
 				};
 			});
-			let pipe = Promisie.pipe(asyncfns);
+			const pipe = Promisie.pipe<number>(asyncfns);
 			pipe(5)
-				.try(result => {
-					expect(result).to.equal(20);
+				.then(result => {
+					expect(result).toEqual(20);
 					done();
 				})
 				.catch(done);
 		});
 		it('Compose should reverse and return a function that will pass arguments to the first function in a series', done => {
-			let asyncfns = [1, 2, 3, 4, 5].map(i => {
+			const asyncfns = [1, 2, 3, 4, 5].map(i => {
 				return function (val) {
 					return new Promise((resolve, reject) => {
 						setTimeout(function () {
 							resolve(i + (val || 0));
-						}, i * 250);
+						}, i * 25);
 					});
 				};
 			});
-			let compose = Promisie.compose(asyncfns);
+			const compose = Promisie.compose<number>(asyncfns);
 			compose(5)
 				.try(result => {
-					expect(result).to.equal(20);
+					expect(result).toEqual(20);
 					done();
 				})
 				.catch(done);
 		});
-	});
-	describe('.map method testing', function () {
-		this.timeout(15000);
-		let arr = [1, 2, 3, 4, 5];
+  });
+  
+  describe('.map method testing', function () {
+		const arr = [1, 2, 3, 4, 5];
 		it('Should resolve with fully resolved array if concurrency isn\'t passed', done => {
-			Promisie.map(arr, val => {
+			Promisie.map<number>(arr, val => {
 				return new Promise(resolve => {
 					let timeout = setTimeout(() => {
 						resolve(val);
 						clearTimeout(timeout);
-					}, 250);
+					}, 25);
 				});
 			})
-				.try(resolved => {
-					expect(resolved).to.deep.equal(arr);
+				.then(resolved => {
+					expect(resolved).toStrictEqual(arr);
 					done();
 				})
 				.catch(done);
@@ -394,223 +386,213 @@ describe('Promisie test', function () {
 					let timeout = setTimeout(() => {
 						reject(val);
 						clearTimeout(timeout);
-					}, 1000);
+					}, 100);
 				});
 			})
 				.then(val => {
 					done(new Error('Should not get here'));
 				}, e => {
-					expect(e).to.equal(1);
+					expect(e).toEqual(1);
 					done();
 				});
 		});
 		it('Should resolve after running operations with a concurrency limit', done => {
-			Promisie.map(arr, 2, val => {
+			Promisie.map<number>(arr, 2, val => {
 				return new Promise(resolve => {
 					let timeout = setTimeout(() => {
 						resolve(val);
 						clearTimeout(timeout);
-					}, 1000);
+					}, 100);
 				});
 			})
 				.try(resolved => {
-					expect(resolved).to.deep.equal(arr);
+					expect(resolved).toStrictEqual(arr);
 					done();
 				})
 				.catch(done);
 		});
 		it('Should also be a chainable method', done => {
-			let mapfn = asyncfn(250, [1, 2, 3]);
-			mapfn()
+			const mapfn = asyncfn(25, [1, 2, 3]);
+			mapfn<number>()
 				.map(function (data) {
-					return asyncfn(250, data + 1)();
+					return asyncfn(25, data + 1)();
 				})
 				.then(result => {
-					expect(result).to.deep.equal([2, 3, 4]);
+					expect(result).toStrictEqual([2, 3, 4]);
 					done();
 				}, done);
 		});
 		it('Should be able to handle concurrency when using chainable method', done => {
-			let mapfn = asyncfn(250, [1, 2, 3, 4, 5]);
+			let mapfn = asyncfn(25, [1, 2, 3, 4, 5]);
 			let startTime = moment();
-			mapfn()
+			mapfn<number>()
 				.map(function (data) {
-					return asyncfn(250, data + 1)();
+					return asyncfn(25, data + 1)();
 				}, 2)
 				.try(result => {
 					let diff = moment().diff(startTime);
-					expect(result).to.deep.equal([2, 3, 4, 5, 6]);
-					expect(diff > 500).to.be.true;
+					expect(result).toStrictEqual([2, 3, 4, 5, 6]);
+					expect(diff > 500).toBeTruthy;
 					done();
 				})
 				.catch(done);
 		});
-	});
-	describe('.each method testing', function () {
-		this.timeout(15000);
-		let arr = [1, 2, 3, 4, 5];
+  });
+  
+  describe('.each method testing', function () {
+		const arr = [1, 2, 3, 4, 5];
 		it('Should resolve with fully resolved array if concurrency isn\'t passed', done => {
-			Promisie.each(arr, val => {
+			Promisie.each<number>(arr, val => {
 				return new Promise(resolve => {
 					let timeout = setTimeout(() => {
 						resolve(val + 1);
 						clearTimeout(timeout);
-					}, 250);
+					}, 25);
 				});
 			})
 				.try(resolved => {
-					expect(resolved).to.deep.equal(arr);
+					expect(resolved).toStrictEqual(arr);
 					done();
 				})
 				.catch(done);
 		});
 		it('Should handle rejection when concurrency isn\'t passed', done => {
-			Promisie.each(arr, val => {
+			Promisie.each<number>(arr, val => {
 				return new Promise((resolve, reject) => {
 					let timeout = setTimeout(() => {
 						reject(val);
 						clearTimeout(timeout);
-					}, 1000);
+					}, 100);
 				});
 			})
 				.then(val => {
 					done(new Error('Should not get here'));
 				}, e => {
-					expect(e).to.equal(1);
+					expect(e).toEqual(1);
 					done();
 				});
 		});
 		it('Should resolve after running operations with a concurrency limit', done => {
-			Promisie.each(arr, 2, val => {
+			Promisie.each<number>(arr, 2, val => {
 				return new Promise(resolve => {
 					let timeout = setTimeout(() => {
 						resolve(val + 1);
 						clearTimeout(timeout);
-					}, 1000);
+					}, 100);
 				});
 			})
 				.try(resolved => {
-					expect(resolved).to.deep.equal(arr);
+					expect(resolved).toStrictEqual(arr);
 					done();
 				})
 				.catch(done);
 		});
 		it('Should also be a chainable method', done => {
-			let eachfn = asyncfn(250, [1, 2, 3]);
-			eachfn()
+			const eachfn = asyncfn(25, [1, 2, 3]);
+			eachfn<number>()
 				.each(function (data) {
-					return asyncfn(250, data + 1)();
+					return asyncfn(25, data + 1)();
 				})
 				.then(result => {
-					expect(result).to.deep.equal([1, 2, 3]);
+					expect(result).toStrictEqual([1, 2, 3]);
 					done();
 				}, done);
 		});
 		it('Should be able to handle concurrency when using chainable method', done => {
-			let eachfn = asyncfn(250, [1, 2, 3, 4, 5]);
+			let eachfn = asyncfn(25, [1, 2, 3, 4, 5]);
 			let startTime = moment();
-			eachfn()
+			eachfn<number>()
 				.each(function (data) {
-					return asyncfn(250, data + 1)();
+					return asyncfn(25, data + 1)();
 				}, 2)
 				.try(result => {
 					let diff = moment().diff(startTime);
-					expect(result).to.deep.equal([1, 2, 3, 4, 5]);
-					expect(diff > 500).to.be.true;
+					expect(result).toStrictEqual([1, 2, 3, 4, 5]);
+					expect(diff > 500).toBeTruthy;
 					done();
 				})
 				.catch(done);
 		});
-	});
-	describe('.spread method testing', function () {
+  });
+  
+  describe('.spread method testing', function () {
 		it('Should spread any iterable value so the next function is called with the array values as arguments', done => {
-			let arr_resolver = asyncfn(250, [1, 2, 3]);
-			arr_resolver()
-				.spread(function () {
-					let argv = [...arguments];
-					expect(Array.isArray(arguments)).to.be.false;
-					expect(argv).to.deep.equal([1, 2, 3]);
+			const arr_resolver = asyncfn(25, [1, 2, 3]);
+			arr_resolver<number>()
+				.spread(function (val1: number, val2: number, val3: number) {
+					expect([val1, val2, val3]).toStrictEqual([1, 2, 3]);
 					done();
 				})
 				.catch(done);
 		});
 		it('Should be chainable', done => {
 			let arr_resolver = asyncfn(250, [1, 2, 3]);
-			arr_resolver()
-				.spread(function () {
-					let argv = [...arguments];
-					return argv;
-				})
+			arr_resolver<number>()
 				.then(result => result)
 				.spread(function (one, two, three) {
-					expect([one, two, three]).to.deep.equal([1, 2, 3]);
+					expect([one, two, three]).toStrictEqual([1, 2, 3]);
 					done();
 				})
 				.catch(done);
 		});
-	});
-	describe('.all static method testing', function () {
-		let arrfns = [asyncfn(250, 1), asyncfn(250, 2)];
-		it('Should handle a normal iterable', done => {
-			Promisie.all(arrfns.map(fn => fn()))
-				.then(result => {
-					expect(result).to.deep.equal([1, 2]);
-					done();
-				}, done);
-		});
-		it('Should handle an argument list', done => {
-			Promisie.all(arrfns[0](), arrfns[1]())
-				.then(result => {
-					expect(result).to.deep.equal([1, 2]);
-					done();
-				}, done);
-		});
-	});
-	describe('.parallel static method testing', function () {
+  });
+  
+  describe('.parallel static method testing', function () {
 		it('Should resolve an object in parallel', done => {
-			let operations = {
-				'hello': asyncfn(250, 'world'),
-				'foo': asyncfn(500, 'bar')
+			const operations = {
+				'hello': asyncfn(25, 'world'),
+				'foo': asyncfn(50, 'bar')
 			};
-			Promisie.parallel(operations)
+			Promisie.parallel<string>(operations)
 				.try(result => {
-					expect(result).to.deep.equal({ hello: 'world', 'foo': 'bar' });
+					expect(result).toStrictEqual({ hello: 'world', 'foo': 'bar' });
+					done();
+				})
+				.catch(done);
+    });
+    it('Should resolve an object in parallel with concurrency', done => {
+			const operations = {
+				'hello': asyncfn(25, 'world'),
+				'foo': asyncfn(50, 'bar')
+			};
+			Promisie.parallel<string>(operations, { concurrency: 1 })
+				.try(result => {
+					expect(result).toStrictEqual({ hello: 'world', 'foo': 'bar' });
 					done();
 				})
 				.catch(done);
 		});
 		it('Should handle sync functions', done => {
 			let operations = {
-				'hello': asyncfn(250, 'world'),
-				'foo': asyncfn(500, 'bar'),
+				'hello': asyncfn(25, 'world'),
+				'foo': asyncfn(50, 'bar'),
 				'fizz': () => 'boom'
 			};
 			Promisie.parallel(operations)
 				.try(result => {
-					expect(result).to.deep.equal({ hello: 'world', 'foo': 'bar', fizz: 'boom' });
+					expect(result).toStrictEqual({ hello: 'world', 'foo': 'bar', fizz: 'boom' });
 					done();
 				})
 				.catch(done);
 		});
 		it('Should handle non-function values', done => {
 			let operations = {
-				'hello': asyncfn(250, 'world'),
-				'foo': asyncfn(500, 'bar'),
+				'hello': asyncfn(25, 'world'),
+				'foo': asyncfn(50, 'bar'),
 				'fizz': 'boom'
 			};
 			Promisie.parallel(operations)
 				.try(result => {
-					expect(result).to.deep.equal({ hello: 'world', 'foo': 'bar', fizz: 'boom' });
+					expect(result).toStrictEqual({ hello: 'world', 'foo': 'bar', fizz: 'boom' });
 					done();
 				})
 				.catch(done);
 		});
 		it('Should handle arrays', done => {
-			let operations = [asyncfn(250, 'world'), asyncfn(500, 'bar')];
+			let operations = [asyncfn(25, 'world'), asyncfn(50, 'bar')];
 			Promisie.parallel(operations)
 				.try(result => {
-					expect(result).to.be.an('array');
-					expect(result).to.deep.equal(['world', 'bar']);
+					expect(result).toStrictEqual({ 0: 'world', 1: 'bar' });
 					done();
 				})
 				.catch(done);
@@ -618,18 +600,18 @@ describe('Promisie test', function () {
 		it('Should handle child objects if recursive options is set to true', done => {
 			let operations = {
 				foo: {
-					bar: asyncfn(250, 'foobar')
+					bar: asyncfn(25, 'foobar')
 				},
 				hello: {
 					world: {
-						hi: asyncfn(250, 'helloworld')
+						hi: asyncfn(25, 'helloworld')
 					}
 				},
-				standard: asyncfn(500, 'operation')
+				standard: asyncfn(50, 'operation')
 			};
 			Promisie.parallel(operations, null, { recursive: true })
 				.try(result => {
-					expect(result).to.deep.equal({
+					expect(result).toStrictEqual({
 						foo: {
 							bar: 'foobar'
 						},
@@ -653,105 +635,120 @@ describe('Promisie test', function () {
 				.then(() => {
 					done(new Error('Should not resolve'));
 				}, e => {
-					expect(e instanceof Error).to.be.true;
+					expect(e instanceof Error).toBeTruthy;
 					done();
 				});
 		});
-	});
-	describe('.settle method testing', function () {
+  });
+  
+  describe('.settle method testing', function () {
 		it('Should always resolve and show rejected/resolved promises', done => {
-			let asyncfns = [asyncfn(500, true), function () {
+			const asyncfns = [asyncfn(50, true), function () {
 				return new Promise((resolve, reject) => {
 					setTimeout(function () {
 						reject(new Error('There was an error'));
-					}, 250);
+					}, 25);
 				});
 			}];
-			Promisie.settle(asyncfns)
+			Promisie.settle<boolean>(asyncfns)
 				.try(result => {
-					expect(result.fulfilled).to.be.an('array');
-					expect(result.rejected).to.be.an('array');
-					expect(result.rejected.length).to.equal(1);
-					expect(result.fulfilled.length).to.equal(1);
+					expect(Array.isArray(result.fulfilled)).toBeTruthy;
+					expect(Array.isArray(result.rejected)).toBeTruthy;
+					expect(result.rejected.length).toEqual(1);
+					expect(result.fulfilled.length).toEqual(1);
+					done();
+				}, done);
+    });
+    it('Should always resolve and show rejected/resolved promises with concurrency', done => {
+			const asyncfns = [asyncfn(50, true), function () {
+				return new Promise((resolve, reject) => {
+					setTimeout(function () {
+						reject(new Error('There was an error'));
+					}, 25);
+				});
+			}];
+			Promisie.settle<boolean>(asyncfns, 1)
+				.try(result => {
+					expect(Array.isArray(result.fulfilled)).toBeTruthy;
+					expect(Array.isArray(result.rejected)).toBeTruthy;
+					expect(result.rejected.length).toEqual(1);
+					expect(result.fulfilled.length).toEqual(1);
 					done();
 				}, done);
 		});
 		it('Should handle sync functions', done => {
-			let asyncfns = [asyncfn(500, true), function () {
+			const asyncfns = [asyncfn(50, true), function () {
 				return new Promise((resolve, reject) => {
 					setTimeout(function () {
 						reject(new Error('There was an error'));
-					}, 250);
+					}, 25);
 				});
 			}, () => true];
 			Promisie.settle(asyncfns)
 				.try(result => {
-					expect(result.fulfilled).to.be.an('array');
-					expect(result.rejected).to.be.an('array');
-					expect(result.rejected.length).to.equal(1);
-					expect(result.fulfilled.length).to.equal(2);
+					expect(Array.isArray(result.fulfilled)).toBeTruthy;
+					expect(Array.isArray(result.rejected)).toBeTruthy;
+					expect(result.rejected.length).toEqual(1);
+					expect(result.fulfilled.length).toEqual(2);
 					done();
 				}, done);
 		});
 		it('Should handle non-function values', done => {
-			let asyncfns = [asyncfn(500, true), function () {
+			const asyncfns = [asyncfn(50, true), function () {
 				return new Promise((resolve, reject) => {
 					setTimeout(function () {
 						reject(new Error('There was an error'));
-					}, 250);
+					}, 25);
 				});
 			}, true];
 			Promisie.settle(asyncfns)
 				.try(result => {
-					expect(result.fulfilled).to.be.an('array');
-					expect(result.rejected).to.be.an('array');
-					expect(result.rejected.length).to.equal(1);
-					expect(result.fulfilled.length).to.equal(2);
+					expect(Array.isArray(result.fulfilled)).toBeTruthy;
+					expect(Array.isArray(result.rejected)).toBeTruthy;
+					expect(result.rejected.length).toEqual(1);
+					expect(result.fulfilled.length).toEqual(2);
 					done();
 				}, done);
 		});
-		it('Should respect the order argument array', done => {
-			let asyncfns = [asyncfn(500, true), asyncfn(250, false)];
-			Promisie.settle(asyncfns)
-				.then(val => {
-					expect(val.fulfilled.length).to.equal(2);
-					expect(val.fulfilled.map(val => val.value)).to.deep.equal([true, false]);
-					done();
-				})
-				.catch(done);
-		})
 		it('Should handle an error in execution of sync function', done => {
-			let asyncfns = [asyncfn(500, true), () => { throw new Error('TEST'); }];
+			let asyncfns = [asyncfn(50, true), () => { throw new Error('TEST'); }];
 			Promisie.settle(asyncfns)
-				.then(val => {
-					done(new Error('Should not resolve'));
-				}, e => {
-					expect(e instanceof Error).to.be.true;
+				.then((result) => {
+          expect(Array.isArray(result.fulfilled)).toBeTruthy;
+					expect(Array.isArray(result.rejected)).toBeTruthy;
+					expect(result.rejected.length).toEqual(1);
+					expect(result.fulfilled.length).toEqual(1);
 					done();
-				});
+        })
+        .catch(done);
 		});
 		it('Should be a chainable method', done => {
-			let i = 0;
-			Promisie.resolve([1, 2, 3, 4, 5])
+      let i = 0;
+      (() => {
+        return new Promisie((resolve, reject) => {
+          resolve([1, 2, 3, 4, 5]);
+        });
+      })()
 				.settle(function () {
-					if (++i % 2 === 0) return asyncfn(250, true);
+					if (++i % 2 === 0) return asyncfn(2, true);
 					else return Promisie.reject(new Error('TEST'));
 				})
 				.try(result => {
-					expect(result.fulfilled).to.be.an('array');
-					expect(result.rejected).to.be.an('array');
-					expect(result.rejected.length).to.equal(3);
-					expect(result.fulfilled.length).to.equal(2);
+					expect(Array.isArray(result.fulfilled)).toBeTruthy;
+					expect(Array.isArray(result.rejected)).toBeTruthy;
+					expect(result.rejected.length).toEqual(3);
+					expect(result.fulfilled.length).toEqual(2);
 					done();
 				})
 				.catch(done);
 		});
-	});
-	describe('.doWhilst static method testing', function () {
+  });
+  
+  describe('.doWhilst static method testing', function () {
 		it('Should run an async function until evaluation passes', done => {
 			let index = 0;
-			let results = [];
-			let someasync = function () {
+			const results = [];
+			const someasync = function () {
 				return new Promisie(resolve => {
 					setTimeout(() => {
 						results.push(index);
@@ -759,18 +756,18 @@ describe('Promisie test', function () {
 					}, 250);
 				});
 			};
-			let evaluation = (val) => val !== 5;
+			const evaluation = (val) => val !== 5;
 			Promisie.doWhilst(someasync, evaluation)
 				.try(() => {
-					expect(results).to.deep.equal([0, 1, 2, 3, 4, 5]);
+					expect(results).toStrictEqual([0, 1, 2, 3, 4, 5]);
 					done();
 				})
 				.catch(done);
 		});
 		it('Should be able to handle sync functions', done => {
 			let index = 0;
-			let results = [];
-			let someasync = function () {
+			const results = [];
+			const someasync = function () {
 				if (index === 3) {
 					results.push(index++);
 					return index;
@@ -784,18 +781,18 @@ describe('Promisie test', function () {
 					});
 				}
 			};
-			let evaluation = (val) => val !== 5;
+			const evaluation = (val) => val !== 5;
 			Promisie.doWhilst(someasync, evaluation)
 				.try(() => {
-					expect(results).to.deep.equal([0, 1, 2, 3, 4, 5]);
+					expect(results).toStrictEqual([0, 1, 2, 3, 4, 5]);
 					done();
 				})
 				.catch(done);
 		});
 		it('Should handle an error', done => {
 			let index = 0;
-			let results = [];
-			let someasync = function () {
+			const results = [];
+			const someasync = function () {
 				return new Promisie((resolve, reject) => {
 					setTimeout(() => {
 						results.push(index);
@@ -804,150 +801,140 @@ describe('Promisie test', function () {
 					}, 250);
 				});
 			};
-			let evaluation = (val) => val !== 5;
+			const evaluation = (val) => val !== 5;
 			Promisie.doWhilst(someasync, evaluation)
 				.then(() => {
 					done(new Error('Should not resolve'))
 				}, e => {
-					expect(e instanceof Error).to.be.true;
+					expect(e instanceof Error).toBeTruthy;
 					done();
 				});
 		});
-	});
-	describe('.iterate static method testing', function () {
+  });
+  
+  describe('.iterate static method testing', function () {
 		it('Should iterate through generator and resolve with final value', done => {
-			let generator = function* (i) {
+			const generator = function* (i) {
 				while (i < 5) yield i++;
 				return i;
 			};
-			Promisie.iterate(generator, 0)
+			Promisie.iterate<number>(generator, 0)
 				.try(result => {
-					expect(result).to.equal(5);
+					expect(result).toEqual(5);
 					done();
 				})
 				.catch(done);
 		});
-	});
-	describe('.finally method testing', function () {
+  });
+  
+  describe('.finally method testing', function () {
 		it('Should execute on reject in previous case', done => {
-			let startTime = moment();
-			asyncfn(250, true)()
-				.then(() => asyncfn(250, true)())
+			const startTime = moment();
+			asyncfn(25, true)()
+				.then(() => asyncfn(25, true)())
 				.then(() => Promisie.reject(new Error('TEST')))
-				.then(() => asyncfn(250, true)())
+				.then(() => asyncfn(25, true)())
 				.finally(() => {
-					expect(moment().diff(startTime) < 700).to.be.true;
+					expect(moment().diff(startTime) < 70).toBeTruthy;
 					done();
 				});
 		});
 		it('Should reject with an error if argument is not a function', done => {
-			asyncfn(250, true)()
-				.then(() => asyncfn(250, true)())
+			asyncfn(25, true)()
+				.then(() => asyncfn(15, true)())
 				.then(() => Promisie.reject(new Error('TEST')))
-				.then(() => asyncfn(250, true)())
+				.then(() => asyncfn(15, true)())
 				.finally(null)
 				.catch(e => {
-					expect(e instanceof Error).to.be.true;
+					expect(e instanceof Error).toBeTruthy;
 					done();
 				});
 		});
-	});
-	describe('.retry method testing', function () {
+  });
+  
+  describe('.retry method testing', function () {
 		it('Should retry until it resolves or hits retry limit', done => {
 			let index = 0;
-			let retryfn = function () {
+			const retryfn = function () {
 				if (2 > index++) return Promise.reject(new Error('Test Error'));
 				return Promise.resolve('hello world');
 			};
-			Promisie.retry(retryfn)
+			Promisie.retry<string>(retryfn)
 				.try(val => {
-					expect(val === 'hello world').to.be.true;
+					expect(val === 'hello world').toBeTruthy;
 					done();
 				})
 				.catch(done);
 		});
 		it('Should retry until it resolves or hits retry limit and respect timeout', done => {
 			let index = 0;
-			let retryfn = function () {
+			const retryfn = function () {
 				if (2 > index++) return Promise.reject(new Error('Test Error'));
 				return Promise.resolve('hello world');
 			};
-			let start = new Date();
-			Promisie.retry(retryfn, { times: 3, timeout: 750 })
+			const start = new Date();
+			Promisie.retry(retryfn, { times: 3, timeout: 75 })
 				.try(val => {
 					let end = new Date();
-					expect(end.getTime() - start.getTime()).to.be.above(1500);
-					expect(val === 'hello world').to.be.true;
+					expect(end.getTime() - start.getTime()).toBeGreaterThan(150);
+					expect(val === 'hello world').toBeTruthy;
 					done();
 				})
 				.catch(done);
 		});
 		it('Should retry until it rejects at retry limit', done => {
 			let index = 0;
-			let retryfn = function () {
-				if (2 > index++) return Promise.reject(new Error('Test Error'));
+			const retryfn = function () {
+				if (5 > index++) return Promise.reject(new Error('Test Error'));
 				return Promise.resolve('hello world');
 			};
-			Promisie.retry(retryfn, { times: 2, timeout: 200 })
+			Promisie.retry(retryfn, { times: 2, timeout: 20 })
 				.then(() => {
 					done(new Error('Should not resolve'));
 				}, e => {
-					expect(e.message).to.equal('Test Error');
+					expect(e.message).toEqual('Test Error');
 					done();
 				});
 		});
 		it('Should handle sync functions', done => {
 			let index = 0;
-			let retryfn = function () {
+			const retryfn = function () {
 				if (2 > index++) return Promise.reject(new Error('Test Error'));
 				return 'hello world';
 			};
-			Promisie.retry(retryfn)
+			Promisie.retry<string>(retryfn)
 				.try(val => {
-					expect(val === 'hello world').to.be.true;
+					expect(val === 'hello world').toBeTruthy;
 					done();
 				})
 				.catch(done);
 		});
-		it('Should handle an error in retry generator', done => {
-			let retryfn = function () {
-				if (2 > index++) return Promise.reject(new Error('Test Error'));
-				return Promise.resolve('hello world');
-			};
-			Promisie.retry(retryfn)
-				.then(() => {
-					done(new Error('Should not resolve'));
-				}, e => {
-					expect(e instanceof Error).to.be.true;
-					done();
-				});
-		});
 		it('Should be a chainable method', done => {
 			let index = 0;
-			let retryfn = function () {
+			const retryfn = function () {
 				if (2 > index++) return Promise.reject(new Error('Test Error'));
 				return Promise.resolve('hello world');
 			};
-			Promisie.resolve()
-				.retry(retryfn)
+			Promisie.sleep(10)
+				.retry<string>(retryfn)
 				.try(val => {
-					expect(val === 'hello world').to.be.true;
+					expect(val === 'hello world').toBeTruthy;
 					done();
 				})
 				.catch(done);
 		});
 		it('Should retry until it rejects at retry limit as a chainable', done => {
 			let index = 0;
-			let retryfn = function () {
+			const retryfn = function () {
 				if (2 > index++) return Promise.reject(new Error('Test Error'));
 				return Promise.resolve('hello world');
 			};
-			Promisie.resolve()
+			Promisie.sleep(10)
 				.retry(retryfn, { times: 2, timeout: 200 })
 				.then(() => {
 					done(new Error('Should not resolve'));
 				}, e => {
-					expect(e.message).to.equal('Test Error');
+					expect(e.message).toEqual('Test Error');
 					done();
 				});
 		});

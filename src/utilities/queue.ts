@@ -98,7 +98,7 @@ function handleResolve(this: Queue, resolve: (value?: any) => void, reject: (val
     current.action = this.action;
     current.resolve(current.value)
       .then(result => {
-        if (--this.active === 0 && !this.current) resolve(decompress(this.root));
+        if (--this.active === 0 && !this.current) resolve(this.decompress(this.root));
         else this.resolve(resolve, reject);
       }, e => {
         this[IS_REJECTED] = true;

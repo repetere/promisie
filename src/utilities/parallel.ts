@@ -22,7 +22,7 @@ export default function parallel<T>(
           const params = args as any[];
           return Promise.all([operation(...params), key]);
         }
-        return [operation(args), key];
+        return Promise.all([operation(args), key]);
       }
       return [operation, key];
     },
@@ -39,7 +39,7 @@ export default function parallel<T>(
     },
   });
   const p = queue
-    .insert(...Object.keys(fns).map(key => [fns[key], key]))
+    .insert(...Object.keys(fns).map(key => ({ operation: fns[key], key })))
     .resolve() as Promise<{ [key: string]: T }>;
 
   return p
@@ -54,7 +54,7 @@ export function handleRecursiveParallel<T>(fns: { [key: string]: any }): { [key:
         Promisie.parallel<T>(handleRecursiveParallel(fns[key]))
       );
     } else {
-      result[key] = key;
+      result[key] = fns[key];
     }
     return result;
   }, {});

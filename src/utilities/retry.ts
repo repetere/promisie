@@ -12,7 +12,7 @@ export default function makeRetryGenerator<T>(
   fn: () => any,
   options: { times: number, timeout?: number }
 ): () => Generator {
-  let current: { __isRejected?: boolean, e: Error } | T;
+  let current: { __isRejected?: boolean, e: Error | null, value: T | null };
   let isFirst = true;
   let { times, timeout: to } = options;
   return function* retry(): Generator {
@@ -27,15 +27,15 @@ export default function makeRetryGenerator<T>(
       if (invoked && typeof invoked.then === 'function' && typeof invoked.catch === 'function') {
         yield invoked
           .then((result: T) => {
-            current = result;
+            current = { __isRejected: false, e: null, value: result };
             return current;
           }, (e: Error) => {
-            current = { __isRejected: true, e };
+            current = { __isRejected: true, e, value: null };
             return current;
           });
       }
       else {
-        current = invoked;
+        current = { __isRejected: false, e: null, value: invoked };
         yield current;
       }
     }

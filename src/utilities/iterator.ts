@@ -1,9 +1,8 @@
 
 export default function iterator(
   generator: Generator,
-  cb: (...args: any[]) => void,
-): (state: any) => void {
-  return function iterate (state: any): void {
+): (state: any, cb: (...args: any[]) => void) => void {
+  return function iterate (state: any, cb: (...args: any[]) => void): void {
     let current;
     try {
       current = generator.next(state);
@@ -17,10 +16,10 @@ export default function iterator(
     const { done, value } = current || { done: true, value: null };
     if (!done) {
       if (value && typeof value.then === 'function' && typeof value.catch === 'function') {
-        value.then(iterate, cb);
+        value.then((next: any) => iterate(next, cb), cb);
       } else {
         let timeout = setTimeout(() => {
-          iterate(value);
+          iterate(value, cb);
           clearTimeout(timeout);
         }, 0);
       }

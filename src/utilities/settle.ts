@@ -30,7 +30,7 @@ export default function settle<T = any>(
         try {
           const invoked = operation();
           if (invoked && typeof invoked.then === 'function' && typeof invoked.catch === 'function') {
-            invoked
+            return invoked
               .then((result: any) => {
                 fulfilled.push({ value: result, status: 'fulfilled' });
               }, (err: any) => {

@@ -17,7 +17,7 @@ export interface RetryOptions {
 }
 
 export interface PromisifyAllObjectParam {
-  [key: string]: (...args: any[]) => void | PromisifyAllObjectParam
+  [key: string]: ((...args: any[]) => void) | any
 }
 
 function isNestedPromisifyAllObjectParam(v: any): v is PromisifyAllObjectParam {
@@ -25,7 +25,7 @@ function isNestedPromisifyAllObjectParam(v: any): v is PromisifyAllObjectParam {
 }
 
 export interface PromisifyAllObjectResult {
-  [key: string]: (<T>(...args: any[]) => Promisie<T>) | PromisifyAllObjectResult
+  [key: string]: (<T>(...args: any[]) => Promisie<T>) | any
 }
 
 function setHandlers(success: (arg: any) => any, failure: any) {
@@ -35,123 +35,6 @@ function setHandlers(success: (arg: any) => any, failure: any) {
   };
 };
 
-const thenables: { [key: string]: Function } = {
-  try<T>(this: Promisie<any>, onSuccess: (arg: any) => any, onFailure?: any): Promisie<T> {
-    const { success, failure } = setHandlers(function (data) {
-      try {
-        return (typeof onSuccess === 'function')
-          ? onSuccess(data)
-          : Promisie.reject(new TypeError('ERROR: try expects onSuccess handler to be a function'));
-      }
-      catch (e) {
-        return Promisie.reject(e);
-      }
-    }, onFailure);
-    return this.then(success, failure) as Promisie<T>;
-  },
-
-  spread<T>(this: Promisie<any>, onSuccess: (...arg: any[]) => any, onFailure?: any): Promisie<T> {
-    const { success, failure } = setHandlers(function (data) {
-      if (typeof data[Symbol.iterator] !== 'function') {
-        return Promisie.reject(new TypeError('ERROR: spread expects input to be iterable'));
-      }
-      if (typeof onSuccess !== 'function') {
-        return Promisie.reject(new TypeError('ERROR: spread expects onSuccess handler to be a function'));
-      }
-      return onSuccess(...data);
-    }, onFailure);
-    return this.then(success, failure) as Promisie<T>;
-  },
-
-  map<T>(
-    this: Promisie<any>,
-    onSuccess: (...arg: any[]) => any,
-    onFailure?: any,
-    concurrency?: number,
-  ): Promisie<T> {
-    if (typeof onFailure === 'number') {
-      concurrency = onFailure;
-      onFailure = undefined;
-    }
-    const { success, failure } = setHandlers(function (data) {
-      if (!Array.isArray(data)) {
-        return Promisie.reject(new TypeError('ERROR: map expects input to be an array'));
-      }
-      if (typeof onSuccess !== 'function') {
-        return Promisie.reject(new TypeError('ERROR: map expects onSuccess handler to be a function'));
-      }
-      return Promisie.map<T>(data, concurrency, onSuccess);
-    }, onFailure);
-    return this.then(success, failure) as Promisie<T>;
-  },
-
-  each<T>(
-    this: Promisie<any>,
-    onSuccess: (...arg: any[]) => any,
-    onFailure?: any,
-    concurrency?: number,
-  ): Promisie<T> {
-    if (typeof onFailure === 'number') {
-      concurrency = onFailure;
-      onFailure = undefined;
-    }
-    const { success, failure } = setHandlers(function (data) {
-      if (!Array.isArray(data)) {
-        return Promisie.reject(new TypeError('ERROR: each expects input to be an array'));
-      }
-      if (typeof onSuccess !== 'function') {
-        return Promisie.reject(new TypeError('ERROR: each expects onSuccess handler to be a function'));
-      }
-      return Promisie.each<T>(data, concurrency, onSuccess);
-    }, onFailure);
-    return this.then(success, failure) as Promisie<T>;
-  },
-
-  settle<T>(
-    this: Promisie<any>,
-    onSuccess: (arg: any) => any,
-    onFailure?: any,
-  ): Promisie<SettleValues<T>> {
-    let { success, failure } = setHandlers(function (data) {
-      if (!Array.isArray(data)) {
-        return Promisie.reject(new TypeError('ERROR: settle expects input to be an array'));
-      }
-      if (typeof onSuccess !== 'function') {
-        return Promisie.reject(new TypeError('ERROR: settle expects onSuccess handler to be a function'));
-      }
-      let operations = data.map(d => () => onSuccess(d));
-      return Promisie.settle(operations);
-    }, onFailure);
-    return this.then(success, failure) as Promisie<SettleValues<T>>;
-  },
-
-  retry<T>(
-    this: Promisie<T>,
-    onSuccess: (arg: any) => any,
-    onFailure?: any,
-    options?: RetryOptions,
-  ): Promisie<T> {
-    if (typeof onFailure === 'object') {
-      options = onFailure;
-      onFailure = undefined;
-    }
-    let { success, failure } = setHandlers(function (data) {
-      if (typeof onSuccess !== 'function') return Promisie.reject(new TypeError('ERROR: retry expects onSuccess handler to be a function'));
-      return Promisie.retry(() => {
-        return onSuccess(data);
-      }, options);
-    }, onFailure);
-    return this.then(success, failure) as Promisie<T>;
-  },
-
-  finally<T>(this: Promisie<any>, onSuccess: (arg?: any) => any): Promisie<T> {
-    let _handler = () => (typeof onSuccess === 'function')
-      ? onSuccess()
-      : Promisie.reject(new TypeError('ERROR: finally expects handler to be a function'));
-    return this.then(_handler, _handler) as Promisie<T>;
-  },
-}
-
 export default class Promisie<T = any> extends Promise<T> {
   [key: string]: Function;
 
@@ -160,9 +43,130 @@ export default class Promisie<T = any> extends Promise<T> {
     reject: (value?: T | PromiseLike<T>) => void,
   ) => void) {
     super(callback);
-    for (let key in thenables) {
-      this[key] = thenables[key].bind(this);
+  }
+
+  then<TSuccess = T, TFailure = any>(
+    onfulfilled?: ((value: T) => any) | null | undefined,
+    onrejected?: ((reason: any) => TFailure | PromiseLike<TFailure>) | null | undefined,
+  ): Promisie<TSuccess> {
+    return super.then(onfulfilled, onrejected) as Promisie<TSuccess>
+  }
+
+  try<TSuccess = T, TFailure = any>(
+    onfulfilled?: ((value: T) => any) | null | undefined,
+    onrejected?: ((reason: any) => TFailure | PromiseLike<TFailure>) | null | undefined,
+  ): Promisie<TSuccess> {
+    const { success, failure } = setHandlers(function (data) {
+      try {
+        return (typeof onfulfilled === 'function')
+          ? onfulfilled(data)
+          : Promisie.reject(new TypeError('ERROR: try expects onSuccess handler to be a function'));
+      }
+      catch (e) {
+        return Promisie.reject(e);
+      }
+    }, onrejected);
+    return this.then(success, failure) as Promisie<TSuccess>;
+  }
+
+  spread<TSuccess = T, TFailure = any>(
+    onfulfilled?: ((...args: T[]) => any) | null | undefined,
+    onrejected?: ((reason: any) => TFailure | PromiseLike<TFailure>) | null | undefined,
+  ): Promisie<TSuccess> {
+    const { success, failure } = setHandlers(function (data) {
+      if (typeof data[Symbol.iterator] !== 'function') {
+        return Promisie.reject(new TypeError('ERROR: spread expects input to be iterable'));
+      }
+      if (typeof onfulfilled !== 'function') {
+        return Promisie.reject(new TypeError('ERROR: spread expects onSuccess handler to be a function'));
+      }
+      return onfulfilled(...data);
+    }, onrejected);
+    return this.then(success, failure) as Promisie<TSuccess>;
+  }
+
+  map<TSuccess = T, TFailure = any>(
+    onfulfilled?: ((datas: T) => any) | null | undefined,
+    onrejected?: ((reason: any) => TFailure | PromiseLike<TFailure>) | null | undefined | number,
+    concurrency?: number,
+  ): Promisie<TSuccess[]> {
+    if (typeof onrejected === 'number') {
+      concurrency = onrejected;
+      onrejected = undefined;
     }
+    const { success, failure } = setHandlers(function (data) {
+      if (!Array.isArray(data)) {
+        return Promisie.reject(new TypeError('ERROR: map expects input to be an array'));
+      }
+      if (typeof onfulfilled !== 'function') {
+        return Promisie.reject(new TypeError('ERROR: map expects onSuccess handler to be a function'));
+      }
+      return Promisie.map<TSuccess>(data, concurrency, onfulfilled);
+    }, onrejected);
+    return this.then(success, failure) as Promisie<TSuccess[]>;
+  }
+
+  each<TSuccess = T, TFailure = any>(
+    onfulfilled?: ((datas: T) => any) | null | undefined,
+    onrejected?: ((reason: any) => TFailure | PromiseLike<TFailure>) | null | undefined | number,
+    concurrency?: number,
+  ): Promisie<TSuccess[]> {
+    if (typeof onrejected === 'number') {
+      concurrency = onrejected;
+      onrejected = undefined;
+    }
+    const { success, failure } = setHandlers(function (data) {
+      if (!Array.isArray(data)) {
+        return Promisie.reject(new TypeError('ERROR: each expects input to be an array'));
+      }
+      if (typeof onfulfilled !== 'function') {
+        return Promisie.reject(new TypeError('ERROR: each expects onSuccess handler to be a function'));
+      }
+      return Promisie.each<TSuccess>(data, concurrency, onfulfilled);
+    }, onrejected);
+    return this.then(success, failure) as Promisie<TSuccess[]>;
+  }
+
+  settle<TSuccess = T, TFailure = any>(
+    onfulfilled?: ((datas: T) => any) | null | undefined,
+    onrejected?: ((reason: any) => TFailure | PromiseLike<TFailure>) | null | undefined,
+  ): Promisie<SettleValues<TSuccess>> {
+    const { success, failure } = setHandlers(function (data) {
+      if (!Array.isArray(data)) {
+        return Promisie.reject(new TypeError('ERROR: settle expects input to be an array'));
+      }
+      if (typeof onfulfilled !== 'function') {
+        return Promisie.reject(new TypeError('ERROR: settle expects onSuccess handler to be a function'));
+      }
+      const operations = data.map(d => () => onfulfilled(d));
+      return Promisie.settle<TSuccess>(operations);
+    }, onrejected);
+    return this.then(success, failure) as Promisie<SettleValues<TSuccess>>;
+  }
+
+  retry<TSuccess = T, TFailure = any>(
+    onfulfilled?: ((args: T) => any) | null | undefined,
+    onrejected?: ((reason: any) => TFailure | PromiseLike<TFailure>) | null | undefined | RetryOptions,
+    options?: RetryOptions,
+  ): Promisie<TSuccess> {
+    if (onrejected && typeof onrejected === 'object') {
+      options = onrejected;
+      onrejected = undefined;
+    }
+    const { success, failure } = setHandlers(function (data) {
+      if (typeof onfulfilled !== 'function') return Promisie.reject(new TypeError('ERROR: retry expects onSuccess handler to be a function'));
+      return Promisie.retry<TSuccess>(() => {
+        return onfulfilled(data);
+      }, options);
+    }, onrejected);
+    return this.then(success, failure) as Promisie<TSuccess>;
+  }
+
+  finally<TSuccess = T>(onfulfilled?: (() => any) | null | undefined): Promisie<TSuccess> {
+    const _handler = () => (typeof onfulfilled === 'function')
+      ? onfulfilled()
+      : Promisie.reject(new TypeError('ERROR: finally expects handler to be a function'));
+    return this.then(_handler, _handler) as Promisie<TSuccess>;
   }
 
   static promisify(
@@ -225,26 +229,22 @@ export default class Promisie<T = any> extends Promise<T> {
     return promisified;
   }
 
-  static async series<T = any>(fns: Array<(...args: any[]) => any>): Promise<T> {
-    let last;
-    for (let i = 0; i < fns.length; i++) {
-      last = await fns[i](last);
-    }
-    return last;
+  static series<T = any>(fns: Array<((state: any) => any) | any[]>): Promisie<T> {
+    return Promisie.iterate<T>(utilities.series(fns), null);
   }
 
-  static pipe<T = any>(fns: Array<(...args: any[]) => any>): (...args: any[]) => Promise<T> {
-    return async function(...args: any[]): Promise<T> {
+  static pipe<T = any>(fns: Array<(...args: any[]) => any>): (...args: any[]) => Promisie<T> {
+    return function(...args: any[]): Promisie<T> {
       const operations = Object.assign([], fns) as Array<(...args: any[]) => any>;
       const first = operations[0];
       operations[0] = function(): any {
         return first(...args);
       }
-      return await Promisie.series<T>(fns);
+      return Promisie.series<T>(operations);
     }
   }
 
-  static compose<T = any>(fns: Array<(...args: any[]) => any>): (...args: any[]) => Promise<T> {
+  static compose<T = any>(fns: Array<(...args: any[]) => any>): (...args: any[]) => Promisie<T> {
     return Promisie.pipe<T>(fns.reverse());
   }
 
@@ -252,6 +252,9 @@ export default class Promisie<T = any> extends Promise<T> {
     const method = (typeof concurrency === 'function')
       ? concurrency
       : fn;
+    if (typeof concurrency !== 'number') {
+      concurrency = 1;
+    }
     return Promisie.promisify(utilities.map)<Array<T>>(method, datas, concurrency);
   }
 
@@ -274,11 +277,12 @@ export default class Promisie<T = any> extends Promise<T> {
   }
 
   static iterate<T = any>(generator: (arg?: any) => Generator, initial: any): Promisie<T> {
-    return Promisie.promisify(utilities.iterator)<T>(generator(initial));
+    const iterator = utilities.iterator(generator(initial));
+    return Promisie.promisify(iterator)<T>(initial);
   }
 
   static doWhilst<T = any>(fn: () => T | Promise<T>, evaluate: (arg: T) => boolean): Promisie<T> {
-    return Promisie.iterate<T>(utilities.doWhilst(fn, evaluate), null);
+    return Promisie.iterate<T>(utilities.doWhilst<T>(fn, evaluate), null);
   }
 
   static sleep(timeout: number): Promisie<void> {
@@ -291,9 +295,13 @@ export default class Promisie<T = any> extends Promise<T> {
 
   static retry<T = any>(fn: () => T | Promise<T>, options?: RetryOptions): Promisie<T | void> {
     const { times = 3, timeout = 0 } = options || {};
-    return Promisie.iterate<T>(utilities.retry(fn, { times, timeout }), null);
+    return Promisie.iterate(utilities.retry<T>(fn, { times, timeout }), null)
+      .then(result => {
+        const { __isRejected, e, value } = result as { __isRejected?: boolean, e: Error | null, value: T | null };
+        if (__isRejected) {
+          return Promisie.reject(e);
+        }
+        return Promisie.resolve(value);
+      });
   }
 }
-
-// const p = Promisie;
-// export default p;
