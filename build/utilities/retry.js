@@ -23,15 +23,15 @@ export default function makeRetryGenerator(fn, options) {
             if (invoked && typeof invoked.then === 'function' && typeof invoked.catch === 'function') {
                 yield invoked
                     .then((result) => {
-                    current = result;
+                    current = { __isRejected: false, e: null, value: result };
                     return current;
                 }, (e) => {
-                    current = { __isRejected: true, e };
+                    current = { __isRejected: true, e, value: null };
                     return current;
                 });
             }
             else {
-                current = invoked;
+                current = { __isRejected: false, e: null, value: invoked };
                 yield current;
             }
         } while (times
