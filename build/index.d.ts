@@ -1,20 +1,40 @@
-declare const path: any;
-declare const series_generator: any;
-declare const series_iterator: any;
-declare const divide: any;
-declare const chainables: any;
-declare const parallel_generator: any;
-declare const settle_generator: any;
-declare const dowhilst_generator: any;
-declare const retry_generator: any;
-declare const QUEUE: any;
-declare var _series: (operations: any, cb: any) => any;
-declare var _map: (operation: any, values: any, concurrency: any, cb: any) => any;
-declare var _settle: (fns: any) => any;
-declare var _parallel: (fns: any, args: any) => any;
-declare var _dowhilst: (fn: any, evaluate: any, cb: any) => void;
-declare var _iterate: (generator: any, cb: any) => void;
-declare var _retry: (fn: any, options: any, cb: any) => void;
-declare var safe_assign: (data: any) => {};
-declare var isGenerator: (val: any) => boolean;
-declare var _handleRecursiveParallel: (fns: any) => {};
+import { SettleValues } from './utilities/settle';
+export interface PromisifyAllOptions {
+    recursive?: boolean;
+    readonly?: boolean;
+}
+export interface ParallelOptions {
+    recursive?: boolean;
+    concurrency?: number;
+}
+export interface RetryOptions {
+    times?: number;
+    timeout?: number;
+}
+export interface PromisifyAllObjectParam {
+    [key: string]: (...args: any[]) => void | PromisifyAllObjectParam;
+}
+export interface PromisifyAllObjectResult {
+    [key: string]: (<T>(...args: any[]) => Promisie<T>) | PromisifyAllObjectResult;
+}
+export default class Promisie<T = any> extends Promise<T> {
+    [key: string]: Function;
+    constructor(callback: (resolve: (value?: T | PromiseLike<T>) => void, reject: (value?: T | PromiseLike<T>) => void) => void);
+    static promisify(fn: (...args: any[]) => void, _this?: any): <T = any>(...args: any[]) => Promisie<T>;
+    static promisifyAll(mod: PromisifyAllObjectParam, _this?: any, options?: PromisifyAllOptions): PromisifyAllObjectResult;
+    static series<T = any>(fns: Array<(...args: any[]) => any>): Promise<T>;
+    static pipe<T = any>(fns: Array<(...args: any[]) => any>): (...args: any[]) => Promise<T>;
+    static compose<T = any>(fns: Array<(...args: any[]) => any>): (...args: any[]) => Promise<T>;
+    static map<T = any>(datas: any[], concurrency: any, fn?: (arg: any) => any): Promisie<Array<T>>;
+    static each<T = any>(datas: T[], concurrency: any, fn?: (arg: any) => any): Promisie<Array<T>>;
+    static parallel<T = any>(fns: {
+        [key: string]: any;
+    }, args?: any, options?: ParallelOptions): Promisie<{
+        [key: string]: any;
+    }>;
+    static settle<T = any>(fns: any[], concurrency?: number): Promisie<SettleValues>;
+    static iterate<T = any>(generator: (arg?: any) => Generator, initial: any): Promisie<T>;
+    static doWhilst<T = any>(fn: () => T | Promise<T>, evaluate: (arg: T) => boolean): Promisie<T>;
+    static sleep(timeout: number): Promisie<void>;
+    static retry<T = any>(fn: () => T | Promise<T>, options?: RetryOptions): Promisie<T | void>;
+}

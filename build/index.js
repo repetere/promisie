@@ -1,149 +1,216 @@
-'use strict';
-const path = require('path');
-const series_generator = require('./series_generator');
-const series_iterator = require('./iterator');
-const divide = require('./divisions');
-const chainables = require('./chainables');
-const parallel_generator = require('./parallel_generator');
-const settle_generator = require('./settle_generator');
-const dowhilst_generator = require('./dowhilst_generator');
-const retry_generator = require('./retry_generator');
-const { QUEUE } = require(path.join(__dirname, '../bin/index'));
-//@ts-ignore
-var _series = function (operations, cb) {
-    for (let i = 0; i < operations.length; i++) {
-        if (typeof operations[i] !== 'function')
-            return cb(new TypeError(`ERROR: series can only be called with functions - argument ${i}: ${operations[i]}`));
+import utilities from './utilities';
+function isNestedPromisifyAllObjectParam(v) {
+    return v && typeof v === 'object';
+}
+function setHandlers(success, failure) {
+    return {
+        success,
+        failure: (typeof failure === 'function') ? failure : undefined
+    };
+}
+;
+const thenables = {
+    try(onSuccess, onFailure) {
+        const { success, failure } = setHandlers(function (data) {
+            try {
+                return (typeof onSuccess === 'function')
+                    ? onSuccess(data)
+                    : Promisie.reject(new TypeError('ERROR: try expects onSuccess handler to be a function'));
+            }
+            catch (e) {
+                return Promisie.reject(e);
+            }
+        }, onFailure);
+        return this.then(success, failure);
+    },
+    spread(onSuccess, onFailure) {
+        const { success, failure } = setHandlers(function (data) {
+            if (typeof data[Symbol.iterator] !== 'function') {
+                return Promisie.reject(new TypeError('ERROR: spread expects input to be iterable'));
+            }
+            if (typeof onSuccess !== 'function') {
+                return Promisie.reject(new TypeError('ERROR: spread expects onSuccess handler to be a function'));
+            }
+            return onSuccess(...data);
+        }, onFailure);
+        return this.then(success, failure);
+    },
+    map(onSuccess, onFailure, concurrency) {
+        if (typeof onFailure === 'number') {
+            concurrency = onFailure;
+            onFailure = undefined;
+        }
+        const { success, failure } = setHandlers(function (data) {
+            if (!Array.isArray(data)) {
+                return Promisie.reject(new TypeError('ERROR: map expects input to be an array'));
+            }
+            if (typeof onSuccess !== 'function') {
+                return Promisie.reject(new TypeError('ERROR: map expects onSuccess handler to be a function'));
+            }
+            return Promisie.map(data, concurrency, onSuccess);
+        }, onFailure);
+        return this.then(success, failure);
+    },
+    each(onSuccess, onFailure, concurrency) {
+        if (typeof onFailure === 'number') {
+            concurrency = onFailure;
+            onFailure = undefined;
+        }
+        const { success, failure } = setHandlers(function (data) {
+            if (!Array.isArray(data)) {
+                return Promisie.reject(new TypeError('ERROR: each expects input to be an array'));
+            }
+            if (typeof onSuccess !== 'function') {
+                return Promisie.reject(new TypeError('ERROR: each expects onSuccess handler to be a function'));
+            }
+            return Promisie.each(data, concurrency, onSuccess);
+        }, onFailure);
+        return this.then(success, failure);
+    },
+    settle(onSuccess, onFailure) {
+        let { success, failure } = setHandlers(function (data) {
+            if (!Array.isArray(data)) {
+                return Promisie.reject(new TypeError('ERROR: settle expects input to be an array'));
+            }
+            if (typeof onSuccess !== 'function') {
+                return Promisie.reject(new TypeError('ERROR: settle expects onSuccess handler to be a function'));
+            }
+            let operations = data.map(d => () => onSuccess(d));
+            return Promisie.settle(operations);
+        }, onFailure);
+        return this.then(success, failure);
+    },
+    retry(onSuccess, onFailure, options) {
+        if (typeof onFailure === 'object') {
+            options = onFailure;
+            onFailure = undefined;
+        }
+        let { success, failure } = setHandlers(function (data) {
+            if (typeof onSuccess !== 'function')
+                return Promisie.reject(new TypeError('ERROR: retry expects onSuccess handler to be a function'));
+            return Promisie.retry(() => {
+                return onSuccess(data);
+            }, options);
+        }, onFailure);
+        return this.then(success, failure);
+    },
+    finally(onSuccess) {
+        let _handler = () => (typeof onSuccess === 'function')
+            ? onSuccess()
+            : Promisie.reject(new TypeError('ERROR: finally expects handler to be a function'));
+        return this.then(_handler, _handler);
+    },
+};
+export default class Promisie extends Promise {
+    constructor(callback) {
+        super(callback);
+        for (let key in thenables) {
+            this[key] = thenables[key].bind(this);
+        }
     }
-    let operator = series_generator(operations);
-    let iterate = series_iterator(operator, cb);
-    iterate();
-};
-//@ts-ignore
-var _map = function (operation, values, concurrency, cb) {
-    if (!Array.isArray(values))
-        cb(new TypeError('ERROR: map can only be called with an Array'));
-    cb = (typeof concurrency === 'function') ? concurrency : cb;
-    let queue = new QUEUE(operation, concurrency, values);
-    return queue.insert(...queue.values)
-        .resolve()
-        //@ts-ignore
-        .then(result => cb(null, result))
-        .catch(cb);
-};
-//@ts-ignore
-var _settle = function (fns) {
-    try {
-        //@ts-ignore
-        let fulfilled = [];
-        //@ts-ignore
-        let rejected = [];
-        //@ts-ignore
-        fns[Symbol.iterator] = settle_generator(fns, fulfilled, rejected);
-        //@ts-ignore
-        return this.all(fns)
-            .then(() => {
-            return {
-                //@ts-ignore
-                fulfilled: (fulfilled.length < 1) ? fulfilled : fulfilled.sort((a, b) => a.index - b.index),
-                //@ts-ignore
-                rejected: (rejected.length < 1) ? rejected : rejected.sort((a, b) => a.index - b.index)
+    static promisify(fn, _this) {
+        const promisified = function (...args) {
+            return new Promisie((resolve, reject) => {
+                args.push(function (err, data) {
+                    if (err) {
+                        reject(err);
+                    }
+                    else {
+                        resolve(data);
+                    }
+                });
+                fn.apply(this, args);
+            });
+        };
+        if (_this) {
+            return promisified.bind(_this);
+        }
+        return promisified;
+    }
+    static promisifyAll(mod, _this, options) {
+        const withDefaultOptions = Object.assign({
+            readonly: true,
+            recursive: false,
+        }, options);
+        let input = Object.create(mod);
+        if (!withDefaultOptions.readonly) {
+            input = Object.assign(input, mod);
+        }
+        else {
+            input = utilities.safeAssign(mod);
+        }
+        const promisified = {};
+        Object.keys(input).forEach((key) => {
+            if (typeof input[key] === 'function') {
+                promisified[`${key}Async`] = (_this)
+                    ? this.promisify(input[key], _this)
+                    : this.promisify(input[key]);
+            }
+            else if (withDefaultOptions.recursive) {
+                const v = input[key];
+                if (isNestedPromisifyAllObjectParam(v)) {
+                    promisified[key] = this.promisifyAll(v, _this, withDefaultOptions);
+                }
+            }
+        });
+        return promisified;
+    }
+    static async series(fns) {
+        let last;
+        for (let i = 0; i < fns.length; i++) {
+            last = await fns[i](last);
+        }
+        return last;
+    }
+    static pipe(fns) {
+        return async function (...args) {
+            const operations = Object.assign([], fns);
+            const first = operations[0];
+            operations[0] = function () {
+                return first(...args);
             };
-            //@ts-ignore
-        }, e => this.reject(e));
+            return await Promisie.series(fns);
+        };
     }
-    catch (e) {
-        //@ts-ignore
-        return this.reject(e);
+    static compose(fns) {
+        return Promisie.pipe(fns.reverse());
     }
-};
-//@ts-ignore
-var _parallel = function (fns, args) {
-    try {
-        let result = Array.isArray(fns) ? [] : {};
-        fns[Symbol.iterator] = parallel_generator(fns, args, result);
-        //@ts-ignore
-        return this.all(fns)
-            //@ts-ignore
-            .then(() => result, e => this.reject(e));
+    static map(datas, concurrency, fn) {
+        const method = (typeof concurrency === 'function')
+            ? concurrency
+            : fn;
+        return Promisie.promisify(utilities.map)(method, datas, concurrency);
     }
-    catch (e) {
-        //@ts-ignore
-        return this.reject(e);
+    static each(datas, concurrency, fn) {
+        return Promisie
+            .map(datas, concurrency, fn)
+            .then(() => datas);
     }
-};
-//@ts-ignore
-var _dowhilst = function (fn, evaluate, cb) {
-    try {
-        let operator = dowhilst_generator(fn, evaluate)();
-        let iterate = series_iterator(operator, cb);
-        iterate();
+    static parallel(fns, args, options = {}) {
+        const { recursive = false, concurrency } = options;
+        if (recursive) {
+            fns = utilities.handleRecursiveParallel(fns);
+        }
+        return Promisie.promisify(utilities.parallel)(fns, args, concurrency);
     }
-    catch (e) {
-        cb(e);
+    static settle(fns, concurrency) {
+        return Promisie.promisify(utilities.settle)(fns, concurrency);
     }
-};
-//@ts-ignore
-var _iterate = function (generator, cb) {
-    let iterate = series_iterator(generator, cb);
-    iterate();
-};
-//@ts-ignore
-var _retry = function (fn, options, cb) {
-    try {
-        //@ts-ignore
-        let operator = retry_generator.call(this, fn, options)();
-        let iterate = series_iterator(operator, cb);
-        iterate();
+    static iterate(generator, initial) {
+        return Promisie.promisify(utilities.iterator)(generator(initial));
     }
-    catch (e) {
-        cb(e);
+    static doWhilst(fn, evaluate) {
+        return Promisie.iterate(utilities.doWhilst(fn, evaluate), null);
     }
-};
-//@ts-ignore
-var safe_assign = function (data) {
-    let result = {};
-    for (let key in data) {
-        let descriptor = Object.getOwnPropertyDescriptor(data, key);
-        //@ts-ignore
-        if (descriptor && descriptor.writable)
-            result[key] = data[key];
+    static sleep(timeout) {
+        return new Promisie((resolve) => {
+            setTimeout(() => {
+                resolve();
+            }, timeout);
+        });
     }
-    return result;
-};
-//@ts-ignore
-var isGenerator = function (val) {
-    let generator = function* () { yield true; };
-    let constructor = generator.constructor;
-    return val.constructor === generator.constructor;
-};
-//@ts-ignore
-var _handleRecursiveParallel = function (fns) {
-    return Object.keys(fns).reduce((result, key) => {
-        //@ts-ignore
-        if (fns[key] && typeof fns[key] === 'object')
-            result[key] = this.parallel.bind(this, _handleRecursiveParallel.call(this, fns[key]));
-        //@ts-ignore
-        else
-            result[key] = fns[key];
-        return result;
-    }, (Array.isArray(fns)) ? [] : {});
-};
-module.exports = {
-    series_generator,
-    series_iterator,
-    divide,
-    chainables,
-    parallel_generator,
-    settle_generator,
-    _series,
-    _map,
-    _parallel,
-    _settle,
-    safe_assign,
-    isGenerator,
-    _dowhilst,
-    _iterate,
-    _retry,
-    _handleRecursiveParallel
-};
+    static retry(fn, options) {
+        const { times = 3, timeout = 0 } = options || {};
+        return Promisie.iterate(utilities.retry(fn, { times, timeout }), null);
+    }
+}

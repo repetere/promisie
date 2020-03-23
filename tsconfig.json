@@ -24,8 +24,16 @@
   },
   "include": [
     "src/**/*.ts",
+    "src/**/*.tsx",
   ],
   "exclude": [
     "**/*.test.ts",
-  ]
+    "**/*.test.tsx",
+  ],
+  "typedocOptions":{
+    "out":"./docs",
+    "include":"./manual",
+    "media": "./manual/media",
+    "hideGenerator":true
+  }
 }
