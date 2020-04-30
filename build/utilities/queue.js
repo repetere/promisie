@@ -79,7 +79,7 @@ function handleResolve(resolve, reject) {
         current.resolve(current.value)
             .then(result => {
             if (--this.active === 0 && !this.current)
-                resolve(decompress(this.root));
+                resolve(this.decompress(this.root));
             else
                 this.resolve(resolve, reject);
         }, e => {
