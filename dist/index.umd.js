@@ -95,7 +95,7 @@
           current.resolve(current.value)
               .then(result => {
               if (--this.active === 0 && !this.current)
-                  resolve(decompress(this.root));
+                  resolve(this.decompress(this.root));
               else
                   this.resolve(resolve, reject);
           }, e => {
@@ -184,7 +184,7 @@
                       const params = args;
                       return Promise.all([operation(...params), key]);
                   }
-                  return [operation(args), key];
+                  return Promise.all([operation(args), key]);
               }
               return [operation, key];
           },
@@ -201,7 +201,7 @@
           },
       });
       const p = queue
-          .insert(...Object.keys(fns).map(key => [fns[key], key]))
+          .insert(...Object.keys(fns).map(key => ({ operation: fns[key], key })))
           .resolve();
       return p
           .then(result => callback(null, result))
@@ -213,7 +213,7 @@
               result[key] = () => (Promisie.parallel(handleRecursiveParallel(fns[key])));
           }
           else {
-              result[key] = key;
+              result[key] = fns[key];
           }
           return result;
       }, {});
@@ -230,7 +230,7 @@
                   try {
                       const invoked = operation();
                       if (invoked && typeof invoked.then === 'function' && typeof invoked.catch === 'function') {
-                          invoked
+                          return invoked
                               .then((result) => {
                               fulfilled.push({ value: result, status: 'fulfilled' });
                           }, (err) => {
@@ -263,8 +263,8 @@
           .catch(callback);
   }
 
-  function iterator(generator, cb) {
-      return function iterate(state) {
+  function iterator(generator) {
+      return function iterate(state, cb) {
           let current;
           try {
               current = generator.next(state);
@@ -278,11 +278,11 @@
           const { done, value } = current || { done: true, value: null };
           if (!done) {
               if (value && typeof value.then === 'function' && typeof value.catch === 'function') {
-                  value.then(iterate, cb);
+                  value.then((next) => iterate(next, cb), cb);
               }
               else {
                   let timeout = setTimeout(() => {
-                      iterate(value);
+                      iterate(value, cb);
                       clearTimeout(timeout);
                   }, 0);
               }
@@ -337,21 +337,53 @@
               if (invoked && typeof invoked.then === 'function' && typeof invoked.catch === 'function') {
                   yield invoked
                       .then((result) => {
-                      current = result;
+                      current = { __isRejected: false, e: null, value: result };
                       return current;
                   }, (e) => {
-                      current = { __isRejected: true, e };
+                      current = { __isRejected: true, e, value: null };
                       return current;
                   });
               }
               else {
-                  current = invoked;
+                  current = { __isRejected: false, e: null, value: invoked };
                   yield current;
               }
           } while (times
               && (current
                   && Object.hasOwnProperty.call(current, '__isRejected')));
           return current;
+      };
+  }
+
+  function handleMap(arr, state) {
+      return arr.map(operation => {
+          const clone = (typeof state === 'object')
+              ? ((Array.isArray(state))
+                  ? Object.assign([], state)
+                  : Object.assign({}, state))
+              : state;
+          if (typeof operation === 'function')
+              return operation(clone);
+          else
+              return operation;
+      });
+  }
+  function makeSeriesGenerator(fns) {
+      return function* series() {
+          let current;
+          let state;
+          while (fns.length) {
+              current = fns.shift();
+              if (Array.isArray(current)) {
+                  const resolved = Promise.all(handleMap(current, state))
+                      .then(result => (Array.isArray(state)) ? state.concat(result) : result)
+                      .catch(e => Promise.reject(e));
+                  state = yield resolved;
+              }
+              else if (current !== undefined)
+                  state = yield current(state);
+          }
+          return state;
       };
   }
 
@@ -364,6 +396,7 @@
       iterator,
       doWhilst: makeDoWhilstGenerator,
       retry: makeRetryGenerator,
+      series: makeSeriesGenerator,
   };
 
   function isNestedPromisifyAllObjectParam(v) {
@@ -375,104 +408,102 @@
           failure: (typeof failure === 'function') ? failure : undefined
       };
   }
-  const thenables = {
-      try(onSuccess, onFailure) {
+  class Promisie extends Promise {
+      constructor(callback) {
+          super(callback);
+      }
+      then(onfulfilled, onrejected) {
+          return super.then(onfulfilled, onrejected);
+      }
+      try(onfulfilled, onrejected) {
           const { success, failure } = setHandlers(function (data) {
               try {
-                  return (typeof onSuccess === 'function')
-                      ? onSuccess(data)
+                  return (typeof onfulfilled === 'function')
+                      ? onfulfilled(data)
                       : Promisie.reject(new TypeError('ERROR: try expects onSuccess handler to be a function'));
               }
               catch (e) {
                   return Promisie.reject(e);
               }
-          }, onFailure);
+          }, onrejected);
           return this.then(success, failure);
-      },
-      spread(onSuccess, onFailure) {
+      }
+      spread(onfulfilled, onrejected) {
           const { success, failure } = setHandlers(function (data) {
               if (typeof data[Symbol.iterator] !== 'function') {
                   return Promisie.reject(new TypeError('ERROR: spread expects input to be iterable'));
               }
-              if (typeof onSuccess !== 'function') {
+              if (typeof onfulfilled !== 'function') {
                   return Promisie.reject(new TypeError('ERROR: spread expects onSuccess handler to be a function'));
               }
-              return onSuccess(...data);
-          }, onFailure);
+              return onfulfilled(...data);
+          }, onrejected);
           return this.then(success, failure);
-      },
-      map(onSuccess, onFailure, concurrency) {
-          if (typeof onFailure === 'number') {
-              concurrency = onFailure;
-              onFailure = undefined;
+      }
+      map(onfulfilled, onrejected, concurrency) {
+          if (typeof onrejected === 'number') {
+              concurrency = onrejected;
+              onrejected = undefined;
           }
           const { success, failure } = setHandlers(function (data) {
               if (!Array.isArray(data)) {
                   return Promisie.reject(new TypeError('ERROR: map expects input to be an array'));
               }
-              if (typeof onSuccess !== 'function') {
+              if (typeof onfulfilled !== 'function') {
                   return Promisie.reject(new TypeError('ERROR: map expects onSuccess handler to be a function'));
               }
-              return Promisie.map(data, concurrency, onSuccess);
-          }, onFailure);
+              return Promisie.map(data, concurrency, onfulfilled);
+          }, onrejected);
           return this.then(success, failure);
-      },
-      each(onSuccess, onFailure, concurrency) {
-          if (typeof onFailure === 'number') {
-              concurrency = onFailure;
-              onFailure = undefined;
+      }
+      each(onfulfilled, onrejected, concurrency) {
+          if (typeof onrejected === 'number') {
+              concurrency = onrejected;
+              onrejected = undefined;
           }
           const { success, failure } = setHandlers(function (data) {
               if (!Array.isArray(data)) {
                   return Promisie.reject(new TypeError('ERROR: each expects input to be an array'));
               }
-              if (typeof onSuccess !== 'function') {
+              if (typeof onfulfilled !== 'function') {
                   return Promisie.reject(new TypeError('ERROR: each expects onSuccess handler to be a function'));
               }
-              return Promisie.each(data, concurrency, onSuccess);
-          }, onFailure);
+              return Promisie.each(data, concurrency, onfulfilled);
+          }, onrejected);
           return this.then(success, failure);
-      },
-      settle(onSuccess, onFailure) {
-          let { success, failure } = setHandlers(function (data) {
+      }
+      settle(onfulfilled, onrejected) {
+          const { success, failure } = setHandlers(function (data) {
               if (!Array.isArray(data)) {
                   return Promisie.reject(new TypeError('ERROR: settle expects input to be an array'));
               }
-              if (typeof onSuccess !== 'function') {
+              if (typeof onfulfilled !== 'function') {
                   return Promisie.reject(new TypeError('ERROR: settle expects onSuccess handler to be a function'));
               }
-              let operations = data.map(d => () => onSuccess(d));
+              const operations = data.map(d => () => onfulfilled(d));
               return Promisie.settle(operations);
-          }, onFailure);
+          }, onrejected);
           return this.then(success, failure);
-      },
-      retry(onSuccess, onFailure, options) {
-          if (typeof onFailure === 'object') {
-              options = onFailure;
-              onFailure = undefined;
+      }
+      retry(onfulfilled, onrejected, options) {
+          if (onrejected && typeof onrejected === 'object') {
+              options = onrejected;
+              onrejected = undefined;
           }
-          let { success, failure } = setHandlers(function (data) {
-              if (typeof onSuccess !== 'function')
+          const { success, failure } = setHandlers(function (data) {
+              if (typeof onfulfilled !== 'function')
                   return Promisie.reject(new TypeError('ERROR: retry expects onSuccess handler to be a function'));
               return Promisie.retry(() => {
-                  return onSuccess(data);
+                  return onfulfilled(data);
               }, options);
-          }, onFailure);
+          }, onrejected);
           return this.then(success, failure);
-      },
-      finally(onSuccess) {
-          let _handler = () => (typeof onSuccess === 'function')
-              ? onSuccess()
+      }
+      finally(onfulfilled) {
+          const _handler = () => (typeof onfulfilled === 'function')
+              ? onfulfilled()
               : Promisie.reject(new TypeError('ERROR: finally expects handler to be a function'));
           return this.then(_handler, _handler);
-      },
-  };
-  class Promisie extends Promise {
-      constructor(callback) {
-          super(callback);
-          for (let key in thenables) {
-              this[key] = thenables[key].bind(this);
-          }
       }
       static promisify(fn, _this) {
           const promisified = function (...args) {
@@ -521,21 +552,17 @@
           });
           return promisified;
       }
-      static async series(fns) {
-          let last;
-          for (let i = 0; i < fns.length; i++) {
-              last = await fns[i](last);
-          }
-          return last;
+      static series(fns) {
+          return Promisie.iterate(utilities.series(fns), null);
       }
       static pipe(fns) {
-          return async function (...args) {
+          return function (...args) {
               const operations = Object.assign([], fns);
               const first = operations[0];
               operations[0] = function () {
                   return first(...args);
               };
-              return await Promisie.series(fns);
+              return Promisie.series(operations);
           };
       }
       static compose(fns) {
@@ -545,6 +572,9 @@
           const method = (typeof concurrency === 'function')
               ? concurrency
               : fn;
+          if (typeof concurrency !== 'number') {
+              concurrency = 1;
+          }
           return Promisie.promisify(utilities.map)(method, datas, concurrency);
       }
       static each(datas, concurrency, fn) {
@@ -563,7 +593,8 @@
           return Promisie.promisify(utilities.settle)(fns, concurrency);
       }
       static iterate(generator, initial) {
-          return Promisie.promisify(utilities.iterator)(generator(initial));
+          const iterator = utilities.iterator(generator(initial));
+          return Promisie.promisify(iterator)(initial);
       }
       static doWhilst(fn, evaluate) {
           return Promisie.iterate(utilities.doWhilst(fn, evaluate), null);
@@ -577,11 +608,16 @@
       }
       static retry(fn, options) {
           const { times = 3, timeout = 0 } = options || {};
-          return Promisie.iterate(utilities.retry(fn, { times, timeout }), null);
+          return Promisie.iterate(utilities.retry(fn, { times, timeout }), null)
+              .then(result => {
+              const { __isRejected, e, value } = result;
+              if (__isRejected) {
+                  return Promisie.reject(e);
+              }
+              return Promisie.resolve(value);
+          });
       }
   }
-  // const p = Promisie;
-  // export default p;
 
   return Promisie;
 
